@@ -1,0 +1,28 @@
+{
+  "name": "ai-task-runner",
+  "version": "1.0.0",
+  "description": "AI Task Runner Full-Stack Production Project",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "postinstall": "npm run build -w @ai-task-runner/shared && node scripts/link-api-express.mjs",
+    "dev": "npm run dev --workspaces --if-present",
+    "build": "npm run build -w @ai-task-runner/shared && npm run build --workspaces --if-present",
+    "start": "npm run start --workspaces --if-present",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "prisma": "^6.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "~5.7.2"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,376 @@
+
+AI Task Runner
+Full-Stack Production Project — Complete Build Prompt
+PERN Stack  •  Redis  •  BullMQ  •  OpenAI APIs  •  Socket.io  •  Docker
+What this document is
+This is your complete, self-contained project brief. Every section is written to be pasted directly
+into an AI coding assistant (Cursor, Copilot, Claude) or used as your personal reference while
+building. Follow the phases in order and you will have a deployable, resume-worthy project.
+────────────────────────────────────────────────────────────────────────────────
+1. Project Overview
+You are building an AI Task Runner — a SaaS-style platform where users submit long-running AI tasks (summarise a PDF, transcribe audio, generate an image, translate a document, analyse sentiment in a CSV) and receive results asynchronously. The system processes tasks in the background using a Redis-backed job queue so the API never blocks and the user never waits.
+This is not a tutorial project. It is a production-grade system that replicates the architecture used by real companies (Cloudinary, Remove.bg, AssemblyAI) and is designed specifically to demonstrate deep knowledge of distributed systems, Redis data structures, async processing, and full-stack ownership.
+1.1 The core problem this solves
+OpenAI API calls take 10–30 seconds. Whisper transcription can take 60–90 seconds for long audio. You cannot make a user wait for an HTTP response that long — browsers time out, servers crash under load, and the UX is broken. The job queue solves this: the API responds in milliseconds, the heavy work happens in a background worker process, and the user gets a live status update when results are ready.
+1.2 Who the users are
+User role
+What they can do
+Free user (default)
+Submit 5 jobs/day, text tasks only, results expire after 24 hours
+Pro user (upgraded)
+Submit 100 jobs/day, all task types, results held 30 days, priority queue
+Admin (you)
+See all jobs across all users, system health, worker status, cost analytics
+2. Tech Stack
+2.1 Full stack breakdown
+Layer
+Technology &amp; reason
+Backend API
+Node.js + Express — simple, async-native, pairs naturally with BullMQ
+Job Queue
+BullMQ — production-grade queue library built on Redis, handles retries / priority / scheduling
+Cache &amp; Queue Broker
+Redis 7+ — sorted sets for priority queues, pub/sub for live updates, atomic counters for rate limiting
+Database
+PostgreSQL — permanent storage for users, jobs, logs, results
+ORM
+Prisma — type-safe DB access, clean migrations, great DX
+Real-time
+Socket.io — pushes live job status from server to client dashboard
+Frontend
+React + Vite — fast, component-based, easy to integrate with Socket.io
+Data fetching
+TanStack Query — handles loading/error states, background refetching
+File storage
+Cloudflare R2 or AWS S3 — stores uploaded PDFs and audio files
+Auth
+JWT (jsonwebtoken) + bcrypt — stateless auth, simple to implement
+Validation
+Zod — runtime schema validation on all API inputs
+Local dev
+Docker Compose — runs Postgres + Redis locally with one command
+Deployment
+Railway — separate services for API, workers, managed Postgres + Redis
+2.2 Why Redis specifically — what you will learn
+Redis is not just a cache here. You will use four distinct data structures, each for a different purpose:
+Redis feature
+How you use it in this project
+Sorted Sets (ZADD / ZRANK)
+BullMQ stores job queues as sorted sets. Score = priority. ZRANGEBYSCORE fetches next job. You learn why sorted sets are O(log N) and perfect for priority.
+Streams + Consumer Groups
+BullMQ v2 uses Streams for at-least-once delivery. If a worker crashes, the job is reclaimed. You learn fault tolerance at the data-structure level.
+Pub/Sub (PUBLISH / SUBSCRIBE)
+Workers publish job state changes. API server subscribes and forwards to dashboard via Socket.io. You learn event-driven architecture.
+Hashes (HSET / HGET)
+Full job payload, result, and error are stored as Redis Hashes. Sorted sets hold just the IDs. You learn data partitioning.
+Atomic counters (INCR / INCRBYFLOAT)
+Rate limiting (jobs/day per user) and cost tracking (tokens spent) use atomic Redis counters. No race conditions, no DB queries on hot paths.
+TTL / Expiry (EXPIRE / SET EX)
+Deduplication: hash of uploaded file stored with 5-minute TTL. Job locks stored with 30-second TTL. You learn how expiry enables distributed coordination.
+3. AI Task Types
+These are the five job types your workers will process. Each is a separate worker function registered with BullMQ. The queue infrastructure is shared — only the processing logic differs per type.
+Task type
+Input → Output → API used
+Document Summariser
+User uploads PDF or pastes text → bullet-point summary + key insights → OpenAI GPT-4o
+Audio Transcriber
+User uploads MP3 / WAV (max 25MB) → full transcript with timestamps → OpenAI Whisper
+Image Generator
+User enters text prompt + style options → generated image (PNG) → DALL-E 3
+Document Translator
+User uploads PDF or text + selects target language → translated text → OpenAI GPT-4o
+Sentiment Analyser
+User uploads CSV of reviews/comments → scored CSV with positive/negative/neutral labels → GPT-4o
+4. Database Schema
+4.1 Tables
+PostgreSQL stores the permanent record. Redis stores the live queue state. Together they give you durability and speed.
+users
+id           UUID PRIMARY KEY DEFAULT gen_random_uuid()
+email        TEXT UNIQUE NOT NULL
+password     TEXT NOT NULL  -- bcrypt hashed
+plan         TEXT DEFAULT 'free'  -- &quot;free&quot; | &quot;pro&quot; | &quot;admin&quot;
+created_at   TIMESTAMPTZ DEFAULT NOW()
+queues
+id                  UUID PRIMARY KEY DEFAULT gen_random_uuid()
+user_id             UUID REFERENCES users(id) ON DELETE CASCADE
+name                TEXT NOT NULL
+concurrency         INT DEFAULT 2
+rate_limit_per_min  INT DEFAULT 5
+created_at          TIMESTAMPTZ DEFAULT NOW()
+jobs
+id            UUID PRIMARY KEY DEFAULT gen_random_uuid()
+user_id       UUID REFERENCES users(id)
+queue_id      UUID REFERENCES queues(id)
+bull_job_id   TEXT  -- bridge to BullMQ/Redis job
+type          TEXT  -- summarise | transcribe | generate | translate | sentiment
+payload       JSONB -- input data (file URL, prompt, options)
+status        TEXT  -- pending | active | completed | failed | dead
+priority      INT DEFAULT 1  -- 1=free, 10=pro
+attempts      INT DEFAULT 0
+max_attempts  INT DEFAULT 3
+result        JSONB -- output data (summary, transcript, image URL)
+error         TEXT
+started_at    TIMESTAMPTZ
+completed_at  TIMESTAMPTZ
+created_at    TIMESTAMPTZ DEFAULT NOW()
+job_logs
+id          UUID PRIMARY KEY DEFAULT gen_random_uuid()
+job_id      UUID REFERENCES jobs(id) ON DELETE CASCADE
+level       TEXT  -- info | warn | error
+message     TEXT
+meta        JSONB
+created_at  TIMESTAMPTZ DEFAULT NOW()
+5. Project Folder Structure
+ai-task-runner/
+├── apps/
+│   ├── api/                    # Express API server
+│   │   ├── src/
+│   │   │   ├── routes/         # auth.routes.ts, jobs.routes.ts, admin.routes.ts
+│   │   │   ├── middleware/     # auth.middleware.ts, rateLimit.middleware.ts
+│   │   │   ├── controllers/    # jobs.controller.ts, auth.controller.ts
+│   │   │   ├── services/       # queue.service.ts, storage.service.ts
+│   │   │   ├── lib/            # redis.ts, prisma.ts, socket.ts
+│   │   │   └── index.ts
+│   │   └── package.json
+│   │
+│   ├── worker/                 # Background worker processes
+│   │   ├── src/
+│   │   │   ├── processors/     # summarise.ts, transcribe.ts, generate.ts
+│   │   │   │                   # translate.ts, sentiment.ts
+│   │   │   ├── lib/            # openai.ts, prisma.ts, redis.ts
+│   │   │   └── index.ts        # registers all processors with BullMQ
+│   │   └── package.json
+│   │
+│   └── web/                    # React frontend
+│       ├── src/
+│       │   ├── pages/          # Dashboard.tsx, NewJob.tsx, JobResult.tsx
+│       │   │                   # Login.tsx, Register.tsx, Admin.tsx
+│       │   ├── components/     # JobCard.tsx, StatusBadge.tsx, UsageBar.tsx
+│       │   ├── hooks/          # useJobs.ts, useSocket.ts, useAuth.ts
+│       │   ├── api/            # jobs.api.ts, auth.api.ts
+│       │   └── main.tsx
+│       └── package.json
+│
+├── packages/
+│   └── shared/                 # Shared types used by api + worker + web
+│       └── src/types.ts        # JobType, JobStatus, UserPlan, etc.
+│
+├── prisma/
+│   ├── schema.prisma
+│   └── migrations/
+│
+├── docker-compose.yml          # Postgres + Redis for local dev
+├── .env.example
+└── README.md
+6. API Endpoints
+6.1 Auth routes
+Endpoint
+Description
+POST /api/auth/register
+Create account — body: { email, password }
+POST /api/auth/login
+Login — returns JWT token
+GET /api/auth/me
+Returns current user info and plan
+PATCH /api/auth/upgrade
+Flip plan from free → pro (no payment needed for portfolio)
+6.2 Job routes (protected)
+Endpoint
+Description
+POST /api/jobs
+Submit new job — body: { type, payload } — checks plan limit via Redis
+GET /api/jobs
+List user's own jobs with status, paginated
+GET /api/jobs/:id
+Get single job details + result
+DELETE /api/jobs/:id
+Cancel a queued job
+POST /api/jobs/:id/retry
+Retry a failed job
+6.3 Admin routes (admin plan only)
+Endpoint
+Description
+GET /api/admin/jobs
+All jobs across all users
+GET /api/admin/stats
+Total jobs, success rate, avg duration, cost this month
+GET /api/admin/workers
+Worker health — active jobs, queue depth from Redis
+GET /api/admin/users
+All users with their plan and job counts
+7. Redis Patterns — Implementation Details
+These are the exact Redis operations you implement manually (not via BullMQ). Write each one yourself to actually learn Redis.
+7.1 Plan-based rate limiting
+// On every POST /api/jobs request:
+const key = `user:jobs:count:${userId}:${todayDate}`;
+const count = await redis.incr(key);
+if (count === 1) await redis.expire(key, 86400); // resets at midnight
+const limit = user.plan === &quot;pro&quot; ? 100 : 5;
+if (count &gt; limit) throw new Error(&quot;Daily job limit reached&quot;);
+7.2 Job deduplication
+// Before enqueuing — prevents charging user twice for same file:
+const fileHash = crypto.createHash(&quot;sha256&quot;).update(fileBuffer).digest(&quot;hex&quot;);
+const dupKey = `dedup:${userId}:${fileHash}`;
+const existing = await redis.get(dupKey);
+if (existing) return { jobId: existing, duplicate: true };
+await redis.set(dupKey, newJobId, &quot;EX&quot;, 300); // 5 min TTL
+7.3 Cost tracking (atomic float increment)
+// After each completed AI job in the worker:
+const tokenCost = (promptTokens + completionTokens) / 1000 * 0.002;
+const costKey = `user:cost:${userId}:${yearMonth}`;
+await redis.incrbyfloat(costKey, tokenCost);
+await redis.expire(costKey, 60 * 60 * 24 * 35); // keep for 35 days
+7.4 Live status via pub/sub
+// In worker — after every state change:
+await redis.publish(&quot;job:updates&quot;, JSON.stringify({
+  jobId, userId, status, progress, result
+}));
+// In API server — subscribe once on startup:
+subscriber.subscribe(&quot;job:updates&quot;, (message) =&gt; {
+  const data = JSON.parse(message);
+  io.to(`user:${data.userId}`).emit(&quot;job:update&quot;, data);
+});
+8. Build Phases — Step-by-Step
+Follow these phases in order. Each phase ends with something fully working and testable. Do not move to the next phase until the current one is complete and you understand everything in it.
+Phase 1 — Foundation (complete this first)
+What you learn in Phase 1
+Docker Compose setup, Prisma migrations, JWT auth flow, BullMQ basics,
+confirming a job moves from API to Redis to worker end-to-end.
+Set up the monorepo folder structure exactly as shown in Section 5
+Create docker-compose.yml with postgres:16 and redis:7-alpine services
+Set up Prisma schema with the four tables from Section 4 and run migration
+Build POST /api/auth/register and POST /api/auth/login with bcrypt + JWT
+Connect to Redis with ioredis — write a test script that does SET / GET
+Create one BullMQ queue called &quot;ai-tasks&quot; and register a dummy worker that logs &quot;job received: [jobId]&quot;
+Build POST /api/jobs that enqueues a job and confirms worker picks it up
+Confirm in Redis CLI: run KEYS bull:* and see your job keys
+Phase 1 done when:
+You POST to /api/jobs, see the job appear in Redis (KEYS bull:*), and the worker logs &quot;job received&quot;.
+Auth works end to end. Prisma migrations ran cleanly.
+Phase 2 — First real AI job
+What you learn in Phase 2
+OpenAI SDK integration, file upload to R2/S3, writing results back to Postgres,
+Socket.io + Redis pub/sub for live status updates, basic React dashboard.
+Add OPENAI_API_KEY to .env and install openai package
+Build the summarise processor — reads PDF from storage, chunks text, calls GPT-4o, writes result to Postgres
+Add file upload endpoint using multer — store file in Cloudflare R2 (free tier)
+Implement Redis pub/sub: worker publishes job updates, API server subscribes and forwards via Socket.io
+Build the React dashboard — job list table, status badges, manual polling fallback if Socket.io is down
+Connect Socket.io-client in React — update job status in real time without page refresh
+Test end to end: upload a PDF, see status change live in browser
+Phase 2 done when:
+A user uploads a PDF, the dashboard shows status changing live from Queued → Processing → Done,
+and the result (summary) is visible in the UI without a page refresh.
+Phase 3 — All five job types
+What you learn in Phase 3
+Whisper API for audio, DALL-E for image generation, structuring multiple
+worker processors cleanly, handling different input/output shapes per job type.
+Add transcribe processor — multer accepts audio, calls openai.audio.transcriptions.create with Whisper
+Add generate processor — takes text prompt, calls openai.images.generate with DALL-E 3, saves image to R2
+Add translate processor — chunks document, calls GPT-4o with system prompt for translation
+Add sentiment processor — parses CSV, batch-processes rows through GPT-4o, returns scored CSV
+Update the React new job form — show different input fields based on selected job type
+Build job result page — renders summary as markdown, plays audio transcript, shows generated image
+Phase 3 done when:
+All five job types work end to end. Each has its own result view.
+The dashboard correctly shows different icons and result types per job.
+Phase 4 — Production features
+What you learn in Phase 4
+Redis rate limiting with INCR + TTL, job deduplication, cost tracking with INCRBYFLOAT,
+dead-letter queue, priority queues, plan tiers enforced in middleware.
+Implement plan-based rate limiting middleware using the Redis pattern from Section 7.1
+Implement job deduplication using the Redis pattern from Section 7.2
+Implement cost tracking using the Redis INCRBYFLOAT pattern from Section 7.3
+Set BullMQ job priority based on user plan — pro jobs get priority: 10, free jobs get priority: 1
+Build dead-letter queue — failed jobs after max_attempts move to a separate BullMQ queue
+Build dead-letter UI — user can see failed jobs with error details and click Retry
+Add the /api/auth/upgrade endpoint and Upgrade to Pro button in the UI
+Add usage bar to client dashboard showing X of Y daily jobs used (fetched from Redis counter)
+Phase 4 done when:
+Free users are blocked after 5 jobs/day. Pro users get priority in queue.
+Failed jobs appear in dead-letter queue with retry button. Cost tracking shows in admin.
+Phase 5 — Deploy to production
+What you learn in Phase 5
+Docker multi-service deployment, environment variable management,
+horizontal worker scaling, production Redis and Postgres configuration.
+Create Dockerfile for API and separate Dockerfile for worker
+Set up Railway project with three services: api, worker, and web
+Add Railway Postgres and Upstash Redis as managed services — copy connection strings to env vars
+Run prisma migrate deploy in Railway build command
+Set CORS, rate limiting headers, and NODE_ENV=production
+Scale workers — deploy a second worker service pointing at the same Redis — confirm both process jobs
+Add /health endpoint to API that pings Postgres and Redis and returns status JSON
+Write a proper README with architecture diagram, setup instructions, and live demo link
+9. Environment Variables
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/aitaskrunner
+# Redis
+REDIS_URL=redis://localhost:6379
+# Auth
+JWT_SECRET=your-long-random-secret-here
+# OpenAI
+OPENAI_API_KEY=sk-...
+# File Storage (Cloudflare R2)
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=ai-task-runner
+R2_PUBLIC_URL=https://your-bucket.r2.dev
+# Frontend
+VITE_API_URL=http://localhost:3001
+VITE_WS_URL=http://localhost:3001
+10. What to Say in an Interview
+This is the exact answer you give when an interviewer asks &quot;walk me through a project.&quot; Every sentence maps to something you built.
+Your interview answer
+&quot;I built an AI Task Runner — a platform where users submit long-running AI jobs like summarising
+documents, transcribing audio, and generating images, and receive results asynchronously.
+The core problem was that OpenAI calls take 10-30 seconds. You cannot block an HTTP request
+that long. I used BullMQ on top of Redis to queue jobs and process them in separate worker
+processes. The API responds in milliseconds and the worker does the heavy lifting.
+I used Redis sorted sets for priority queues — Pro users get priority 10, free users get
+priority 1. BullMQ uses Redis Streams with consumer groups for at-least-once delivery,
+so if a worker crashes, the job is reclaimed. I used Redis pub/sub to push live status
+updates to the dashboard via Socket.io without polling.
+I also implemented per-user rate limiting using Redis INCR with TTL, job deduplication
+using content hash keys, and real-time cost tracking using INCRBYFLOAT. None of those
+hit Postgres — they are all atomic Redis operations on hot paths.
+The whole system is horizontally scalable — you add capacity by deploying more worker
+containers pointed at the same Redis instance. I deployed it on Railway with separate
+API and worker services.&quot;
+11. Prompt Template for AI Coding Assistants
+Copy and paste this prompt at the start of each new coding session. Replace [PHASE] with the current phase number.
+Session starter prompt
+I am building an AI Task Runner using the PERN stack (PostgreSQL, Express, React, Node.js)
+with Redis and BullMQ for job queuing. I am currently on Phase [PHASE] of 5.
+Tech stack: Node.js + Express API, BullMQ + Redis for job queue, Prisma + PostgreSQL,
+React + Vite frontend, Socket.io for real-time updates, OpenAI APIs (GPT-4o, Whisper,
+DALL-E 3), Cloudflare R2 for file storage, Docker Compose for local dev.
+Project structure: monorepo with apps/api, apps/worker, apps/web, packages/shared.
+My goal for this session: [DESCRIBE WHAT YOU WANT TO BUILD].
+Please explain what you are building and why before writing any code so I understand
+the concepts. Then write the code with clear comments. If you use a Redis pattern,
+explain which data structure you are using and why it is the right choice here.
+12. Learning Checkpoints
+After each phase, answer these questions. If you cannot answer them, re-read the code you wrote until you can. These are the questions an interviewer will ask.
+After Phase 1
+What does BullMQ store in Redis when you enqueue a job? (Run KEYS bull:* and HGETALL on one key to find out)
+What is the difference between the API process and the worker process? Why are they separate?
+What happens to a job if the worker process crashes while processing it?
+After Phase 2
+How does a status update get from the worker to the user's browser? Trace the full path.
+Why do you need two Redis connections in the API — one for commands and one for subscribing?
+What is Socket.io doing that plain HTTP cannot do?
+After Phase 3
+Why does the Whisper transcription job need a higher max file size than the summariser?
+How does chunking work for long documents before sending to GPT-4o?
+What is the shape of the result object stored in Postgres for each job type?
+After Phase 4
+Why is Redis INCR atomic? What problem would occur if you used Postgres for rate limiting instead?
+What is a dead-letter queue and why do you need one separate from the main queue?
+How does BullMQ use a Redis sorted set to implement the priority queue? What is the score?
+After Phase 5
+How do two worker instances avoid processing the same job twice?
+What happens in your system if Redis goes down? What fails immediately, what degrades gracefully?
+What would you change if you needed to handle 10,000 jobs per hour instead of 100?
+Build it. Ship it. Own it.
+This document is your complete reference. Come back to it every session.

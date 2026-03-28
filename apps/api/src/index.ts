@@ -1,0 +1,61 @@
+import "./load-env.js";
+import { createServer } from "node:http";
+import { env } from "./config/env.js";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import express from "express";
+import { prisma } from "./core/lib/prisma.js";
+import { redis } from "./core/lib/redis.js";
+import { attachRealtime } from "./core/realtime.js";
+import { errorMiddleware } from "./core/middleware/error.middleware.js";
+import { adminRouter } from "./modules/admin/index.js";
+import { authRouter } from "./modules/auth/index.js";
+import { jobsRouter } from "./modules/jobs/index.js";
+
+const app = express();
+app.use(
+  cors({
+    origin: env.CORS_ORIGIN === undefined ? true : env.CORS_ORIGIN,
+    credentials: true,
+  }),
+);
+app.use(cookieParser());
+app.use(express.json());
+
+app.get("/health", async (_req, res) => {
+  const health: {
+    status: "ok" | "degraded";
+    postgres: "ok" | "error";
+    redis: "ok" | "error";
+  } = { status: "ok", postgres: "ok", redis: "ok" };
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+  } catch {
+    health.postgres = "error";
+    health.status = "degraded";
+  }
+  try {
+    const pong = await redis.ping();
+    if (pong !== "PONG") {
+      health.redis = "error";
+      health.status = "degraded";
+    }
+  } catch {
+    health.redis = "error";
+    health.status = "degraded";
+  }
+  res.status(health.status === "ok" ? 200 : 503).json(health);
+});
+
+app.use("/api/auth", authRouter);
+app.use("/api/jobs", jobsRouter);
+app.use("/api/admin", adminRouter);
+
+app.use(errorMiddleware);
+
+const httpServer = createServer(app);
+attachRealtime(httpServer);
+
+httpServer.listen(env.PORT, () => {
+  console.log(`API listening on http://localhost:${env.PORT}`);
+});
