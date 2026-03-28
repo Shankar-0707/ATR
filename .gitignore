@@ -22,3 +22,4 @@ coverage/
 **/readme.md
 extracted_requirements.txt
 .txt
+.md
