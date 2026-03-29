@@ -49,7 +49,9 @@ function Layout({ children }: { children: ReactNode }) {
             <>
               <Link to="/">Jobs</Link>
               <Link to="/jobs/new">New job</Link>
-              {user.plan === "admin" ? <a href="/admin">Admin</a> : null}
+              {user.plan === "admin" ? (
+                <Link to="/admin">Admin</Link>
+              ) : null}
               <button
                 type="button"
                 className="linkish"

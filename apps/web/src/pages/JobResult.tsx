@@ -1,5 +1,7 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
+import * as jobsApi from "../api/jobs.api.js";
 import { useJob } from "../hooks/useJobs.js";
 import { StatusBadge } from "../components/StatusBadge.js";
 
@@ -64,7 +66,17 @@ function ResultBody({
 
 export function JobResult() {
   const { id } = useParams<{ id: string }>();
+  const qc = useQueryClient();
   const q = useJob(id);
+
+  const retry = useMutation({
+    mutationFn: () => jobsApi.retryJob(id!),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["jobs", "one", id] });
+      void qc.invalidateQueries({ queryKey: ["jobs", "list"] });
+      void qc.invalidateQueries({ queryKey: ["usage"] });
+    },
+  });
 
   if (q.isLoading) {
     return (
@@ -95,6 +107,24 @@ export function JobResult() {
       </div>
       <p className="muted small mono">{job.id}</p>
       {job.error ? <p className="error">{job.error}</p> : null}
+      {job.status === "dead" ? (
+        <p className="muted">
+          This job reached <strong>dead</strong> status (maximum attempts
+          exhausted). Create a new job instead.
+        </p>
+      ) : null}
+      {job.status === "failed" ? (
+        <p>
+          <button
+            type="button"
+            className="button"
+            onClick={() => retry.mutate()}
+            disabled={retry.isPending}
+          >
+            {retry.isPending ? "Retrying…" : "Retry job"}
+          </button>
+        </p>
+      ) : null}
       {job.result ? (
         <>
           <h2>Result</h2>

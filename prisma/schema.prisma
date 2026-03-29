@@ -16,6 +16,21 @@ model User {
   created_at DateTime @default(now()) @db.Timestamptz(6)
   queues     Queue[]
   jobs       Job[]
+  usageDaily UsageDaily[]
+}
+
+/// Per-user UTC-day aggregates for Phase 4 (worker outcomes; submission counts use Job rows).
+model UsageDaily {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  day        DateTime @db.Date
+  completed  Int      @default(0)
+  failed     Int      @default(0)
+  dead       Int      @default(0)
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, day])
+  @@index([day])
 }
 
 model Queue {

@@ -263,3 +263,29 @@ button[type="submit"]:hover {
   border-radius: 6px;
   font: inherit;
 }
+
+.usage-bar {
+  margin-bottom: 0.75rem;
+}
+
+.admin-section {
+  margin-top: 1.5rem;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-table th {
+  font-weight: 600;
+  color: #475569;
+}

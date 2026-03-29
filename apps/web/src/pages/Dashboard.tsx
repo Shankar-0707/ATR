@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useJobsList } from "../hooks/useJobs.js";
 import { StatusBadge } from "../components/StatusBadge.js";
+import { UsageBar } from "../components/UsageBar.js";
 
 export function Dashboard() {
   const q = useJobsList();
@@ -24,6 +25,7 @@ export function Dashboard() {
 
   return (
     <div className="page">
+      <UsageBar />
       <div className="row space-between">
         <h1>Jobs</h1>
         <Link className="button" to="/jobs/new">

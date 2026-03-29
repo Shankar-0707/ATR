@@ -124,29 +124,31 @@ All four types runnable from UI or API with valid Gemini + Cloudinary (where upl
 
 ---
 
-# Phase 4 — Operations & product rules (planned)
+# Phase 4 — Operations & product rules (implemented)
 
-**Status:** not implemented as a closed milestone in this reference; scope follows the **roadmap** and `extracted_requirements.txt`.
+**Status:** implemented. See **`docs/phase-4.md`** for runbooks and test steps.
 
-## Intended goals
+## Delivered (summary)
 
-| Theme | Work items |
-|-------|------------|
-| **Rate limiting** | Per-user / per-plan limits on job creation or API routes (Redis-backed counters, sliding windows). |
-| **Deduplication** | Optional identical-payload or content-hash dedup to avoid duplicate spend. |
-| **Cost tracking** | Record tokens, image calls, or estimated USD per job; aggregate per user/plan. |
-| **Priorities** | Enforce or refine plan-based **priority** on BullMQ (already partially present in schema). |
-| **Dead-letter queue** | Failed jobs after max retries → DLQ or explicit `dead` status + operator tooling. |
-| **Admin UI** | Use `/api/admin` for cross-user views, moderation, or metrics (routes stubbed earlier). |
-| **Upgrade / billing** | Tie free/pro rules to **rate limits**, concurrency, or model access; **plan upgrade** already exists in auth — extend with business rules. |
+| Theme | Implementation |
+|-------|------------------|
+| **Rate limiting** | Redis **daily** + **per-minute** slots; admin bypass. |
+| **Concurrency cap** | Max `pending` + `active` jobs per plan. |
+| **Deduplication** | Optional Redis key per user + payload hash (`DEDUP_WINDOW_SECONDS`; `0` = off). |
+| **Usage metering** | `UsageDaily` (UTC day): `completed`, `failed`, `dead`; worker updates on outcomes. |
+| **Priorities** | Existing BullMQ **priority** by plan unchanged. |
+| **Dead jobs** | Worker increments `attempts`; status **`dead`** when `attempts >= max_attempts` (plan-based). |
+| **Admin** | `GET /api/admin/stats`, `/users`, `/jobs` + web **Admin** page (`plan === admin`). |
+| **User usage** | `GET /api/usage` + dashboard **Usage** bar. |
+| **Retries** | `POST /api/jobs/:id/retry` for **`failed`** only; re-enforces limits. |
 
-## “Done when” (Phase 4 — target)
+## “Done when” (Phase 4)
 
 | Criterion |
 |-----------|
-| Free vs pro (vs admin) **rules enforced** in API or worker (not only in UI). |
-| Failed jobs **retryable** with clear semantics; DLQ or `dead` status documented. |
-| **Admin** can inspect or operate on platform data (minimal viable product). |
+| Free vs pro (vs admin) **rules enforced** in the API (rate limits, concurrency, optional generate block). |
+| **`failed`** vs **`dead`** documented; **retry** only for failed. |
+| **Admin** can inspect platform stats, users, and jobs (MVP). |
 
 ---
 

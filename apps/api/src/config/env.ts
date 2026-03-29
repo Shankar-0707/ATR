@@ -23,9 +23,28 @@ const schema = z.object({
   CLOUDINARY_CLOUD_NAME: z.string().min(1, "CLOUDINARY_CLOUD_NAME is required"),
   CLOUDINARY_API_KEY: z.string().min(1, "CLOUDINARY_API_KEY is required"),
   CLOUDINARY_API_SECRET: z.string().min(1, "CLOUDINARY_API_SECRET is required"),
-});
 
-export type Env = z.infer<typeof schema> & { bullJobDelayMs: number };
+  // --- Phase 4: rate limits & plans (optional — defaults below) ---
+  RATE_LIMIT_FREE_JOBS_PER_DAY: z.coerce.number().min(1).optional(),
+  RATE_LIMIT_PRO_JOBS_PER_DAY: z.coerce.number().min(1).optional(),
+  RATE_LIMIT_ADMIN_JOBS_PER_DAY: z.coerce.number().min(1).optional(),
+  RATE_LIMIT_FREE_JOBS_PER_MINUTE: z.coerce.number().min(1).optional(),
+  RATE_LIMIT_PRO_JOBS_PER_MINUTE: z.coerce.number().min(1).optional(),
+  RATE_LIMIT_ADMIN_JOBS_PER_MINUTE: z.coerce.number().min(1).optional(),
+  MAX_CONCURRENT_JOBS_FREE: z.coerce.number().min(1).optional(),
+  MAX_CONCURRENT_JOBS_PRO: z.coerce.number().min(1).optional(),
+  MAX_CONCURRENT_JOBS_ADMIN: z.coerce.number().min(1).optional(),
+  MAX_ATTEMPTS_FREE: z.coerce.number().min(1).optional(),
+  MAX_ATTEMPTS_PRO: z.coerce.number().min(1).optional(),
+  MAX_ATTEMPTS_ADMIN: z.coerce.number().min(1).optional(),
+  /** If true, free-plan users cannot enqueue `generate` jobs (403). */
+  FREE_PLAN_BLOCK_GENERATE: z.preprocess(
+    (val) => val === "true" || val === true,
+    z.boolean(),
+  ).optional(),
+  /** Dedup window for identical JSON payloads (seconds). 0 = disabled. */
+  DEDUP_WINDOW_SECONDS: z.coerce.number().min(0).optional(),
+});
 
 const parsed = schema.parse(process.env);
 
@@ -42,4 +61,23 @@ function bullJobDelayMs(): number {
 }
 
 /** Validated env — `load-env.ts` runs before this module loads. */
-export const env = { ...parsed, bullJobDelayMs: bullJobDelayMs() };
+export const env = {
+  ...parsed,
+  bullJobDelayMs: bullJobDelayMs(),
+  rateLimitFreeJobsPerDay: parsed.RATE_LIMIT_FREE_JOBS_PER_DAY ?? 30,
+  rateLimitProJobsPerDay: parsed.RATE_LIMIT_PRO_JOBS_PER_DAY ?? 500,
+  rateLimitAdminJobsPerDay: parsed.RATE_LIMIT_ADMIN_JOBS_PER_DAY ?? 100_000,
+  rateLimitFreeJobsPerMinute: parsed.RATE_LIMIT_FREE_JOBS_PER_MINUTE ?? 5,
+  rateLimitProJobsPerMinute: parsed.RATE_LIMIT_PRO_JOBS_PER_MINUTE ?? 60,
+  rateLimitAdminJobsPerMinute: parsed.RATE_LIMIT_ADMIN_JOBS_PER_MINUTE ?? 5_000,
+  maxConcurrentJobsFree: parsed.MAX_CONCURRENT_JOBS_FREE ?? 5,
+  maxConcurrentJobsPro: parsed.MAX_CONCURRENT_JOBS_PRO ?? 25,
+  maxConcurrentJobsAdmin: parsed.MAX_CONCURRENT_JOBS_ADMIN ?? 500,
+  maxAttemptsFree: parsed.MAX_ATTEMPTS_FREE ?? 3,
+  maxAttemptsPro: parsed.MAX_ATTEMPTS_PRO ?? 5,
+  maxAttemptsAdmin: parsed.MAX_ATTEMPTS_ADMIN ?? 10,
+  freePlanBlockGenerate: parsed.FREE_PLAN_BLOCK_GENERATE ?? false,
+  dedupWindowSeconds: parsed.DEDUP_WINDOW_SECONDS ?? 120,
+};
+
+export type Env = typeof env;

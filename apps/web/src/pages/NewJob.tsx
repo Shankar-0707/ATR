@@ -22,6 +22,7 @@ export function NewJob() {
 
   const go = (job: { id: string }) => {
     void qc.invalidateQueries({ queryKey: ["jobs"] });
+    void qc.invalidateQueries({ queryKey: ["usage"] });
     nav(`/jobs/${job.id}`);
   };
 
