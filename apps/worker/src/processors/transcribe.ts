@@ -1,13 +1,12 @@
-import { extname } from "node:path";
-import OpenAI from "openai";
-import { toFile } from "openai/uploads";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { publishJobUpdate } from "../lib/job-events.js";
 import { fetchBinaryFromCloudinaryUrl } from "../lib/cloudinary-fetch.js";
+import { getGemini } from "../lib/gemini-client.js";
 import { env } from "../config/env.js";
 
-const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+/** Inline audio limit for Gemini multimodal requests (~20 MiB). */
+const MAX_INLINE_AUDIO_BYTES = 20 * 1024 * 1024;
 
 const payloadSchema = z.object({
   source: z.literal("cloudinary"),
@@ -33,8 +32,11 @@ export async function processTranscribeJob(input: {
   });
 
   const buf = await fetchBinaryFromCloudinaryUrl(parsed.secureUrl);
-  const ext = extname(parsed.fileName) || ".mp3";
-  const file = await toFile(buf, `input${ext}`);
+  if (buf.length > MAX_INLINE_AUDIO_BYTES) {
+    throw new Error(
+      `Audio is too large for inline transcription (max ${MAX_INLINE_AUDIO_BYTES} bytes).`,
+    );
+  }
 
   await publishJobUpdate({
     jobId: dbJobId,
@@ -43,12 +45,26 @@ export async function processTranscribeJob(input: {
     progress: 40,
   });
 
-  const tr = await openai.audio.transcriptions.create({
-    file,
-    model: env.OPENAI_TRANSCRIPTION_MODEL,
+  const mime = parsed.mimeType?.trim() || "audio/mpeg";
+  const ai = getGemini();
+  const res = await ai.models.generateContent({
+    model: env.GEMINI_TRANSCRIPTION_MODEL,
+    contents: [
+      {
+        inlineData: {
+          mimeType: mime,
+          data: buf.toString("base64"),
+        },
+      },
+      "Transcribe this audio verbatim. Output only the spoken words, with no labels or commentary.",
+    ],
+    config: {
+      temperature: 0,
+      maxOutputTokens: 8192,
+    },
   });
 
-  const text = tr.text ?? "";
+  const text = res.text?.trim() ?? "";
 
   if (!String(text).trim()) {
     throw new Error("Transcription was empty");
@@ -56,7 +72,7 @@ export async function processTranscribeJob(input: {
 
   const result = {
     transcript: String(text).trim(),
-    model: env.OPENAI_TRANSCRIPTION_MODEL,
+    model: env.GEMINI_TRANSCRIPTION_MODEL,
     source: "cloudinary" as const,
   };
 
