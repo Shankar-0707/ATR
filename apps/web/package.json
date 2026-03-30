@@ -10,11 +10,15 @@
   },
   "dependencies": {
     "@ai-task-runner/shared": "*",
+    "@tailwindcss/vite": "^4.2.2",
     "@tanstack/react-query": "^5.62.0",
+    "axios": "^1.14.0",
+    "lucide-react": "^1.7.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.0",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
