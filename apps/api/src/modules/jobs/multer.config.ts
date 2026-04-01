@@ -3,8 +3,8 @@ import multer from "multer";
 /** Max PDF size for summarise uploads (15 MiB). */
 export const PDF_MAX_BYTES = 15 * 1024 * 1024;
 
-/** Whisper / OpenAI effective limit (~25 MiB). */
-export const AUDIO_MAX_BYTES = 25 * 1024 * 1024;
+/** Upload limit aligned with worker Gemini inline audio cap (20 MiB). */
+export const AUDIO_MAX_BYTES = 20 * 1024 * 1024;
 
 const AUDIO_MIMES = new Set([
   "audio/mpeg",

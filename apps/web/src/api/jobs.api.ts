@@ -37,6 +37,10 @@ export function getJob(id: string) {
   return apiJson<JobRow>(`/api/jobs/${id}`);
 }
 
+export function retryJob(id: string) {
+  return apiJson<JobRow>(`/api/jobs/${id}/retry`, { method: "POST" });
+}
+
 export function createSummariseText(text: string) {
   return apiJson<JobRow>("/api/jobs", {
     method: "POST",

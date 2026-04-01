@@ -13,13 +13,7 @@ coverage/
 .env.development
 .env.production
 .env.test
-.env.example
 
-# Project preference: no docs or README files on remote
-/docs/
-/README.md
-**/README.md
-**/readme.md
-extracted_requirements.txt
-.txt
-.md
+# Hide markdown files as requested
+*.md
+

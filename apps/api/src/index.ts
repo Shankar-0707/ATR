@@ -11,6 +11,8 @@ import { errorMiddleware } from "./core/middleware/error.middleware.js";
 import { adminRouter } from "./modules/admin/index.js";
 import { authRouter } from "./modules/auth/index.js";
 import { jobsRouter } from "./modules/jobs/index.js";
+import { usageRouter } from "./modules/usage/usage.routes.js";
+import { upgradeRoutes } from "./modules/upgrade/index.js";
 
 const app = express();
 app.use(
@@ -49,6 +51,8 @@ app.get("/health", async (_req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/jobs", jobsRouter);
+app.use("/api/usage", usageRouter);
+app.use("/api/upgrade", upgradeRoutes);
 app.use("/api/admin", adminRouter);
 
 app.use(errorMiddleware);

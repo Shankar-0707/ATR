@@ -6,6 +6,7 @@ export class ApiError extends Error {
   constructor(
     public statusCode: number,
     message: string,
+    public details?: Record<string, unknown>,
   ) {
     super(message);
     this.name = "ApiError";
@@ -42,7 +43,10 @@ export function errorMiddleware(
     return;
   }
   if (err instanceof ApiError) {
-    res.status(err.statusCode).json({ error: err.message });
+    res.status(err.statusCode).json({
+      error: err.message,
+      ...(err.details !== undefined ? { details: err.details } : {}),
+    });
     return;
   }
   console.error(err);

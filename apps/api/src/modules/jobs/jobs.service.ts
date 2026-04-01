@@ -3,6 +3,13 @@ import type { Express } from "express";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../core/lib/prisma.js";
 import { ApiError } from "../../core/middleware/error.middleware.js";
+import {
+  isJobTypeAllowedForPlan,
+  maxAttemptsForPlan,
+  maxConcurrentJobs,
+} from "../../config/plan-policy.js";
+import { assertNotDuplicatePayload, rememberDedupJob } from "../../core/lib/dedup.js";
+import { consumeJobRateSlots } from "../../core/lib/rate-limit.js";
 import { destroyRaw, uploadRawAsset } from "./storage.service.js";
 import { aiTasksQueue, enqueueAiTask } from "./queue.service.js";
 
@@ -25,36 +32,84 @@ function priorityForPlan(plan: UserPlan): number {
   return 1;
 }
 
+async function enforceJobPolicies(
+  userId: string,
+  plan: UserPlan,
+  type: JobType,
+  payload: Prisma.InputJsonValue,
+  options?: { skipDedup?: boolean },
+): Promise<void> {
+  if (!isJobTypeAllowedForPlan(plan, type)) {
+    throw new ApiError(
+      403,
+      "This job type is not available on your plan. Upgrade to continue.",
+    );
+  }
+
+  const concurrent = await prisma.job.count({
+    where: {
+      user_id: userId,
+      status: { in: ["pending", "active"] },
+    },
+  });
+  if (concurrent >= maxConcurrentJobs(plan)) {
+    throw new ApiError(
+      429,
+      "Too many jobs in progress. Wait for completion or cancel a pending job.",
+    );
+  }
+
+  if (!options?.skipDedup) {
+    await assertNotDuplicatePayload(userId, type, payload);
+  }
+}
+
 export async function createJob(
   userId: string,
   plan: UserPlan,
   type: JobType,
   payload: Prisma.InputJsonValue,
 ) {
-  const queueId = await getDefaultQueueId(userId);
-  const priority = priorityForPlan(plan);
-  const job = await prisma.job.create({
-    data: {
-      user_id: userId,
-      queue_id: queueId,
+  await enforceJobPolicies(userId, plan, type, payload);
+  const rate = await consumeJobRateSlots(userId, plan);
+  let createdJobId: string | null = null;
+  try {
+    const queueId = await getDefaultQueueId(userId);
+    const priority = priorityForPlan(plan);
+    const maxAttempts = maxAttemptsForPlan(plan);
+    const job = await prisma.job.create({
+      data: {
+        user_id: userId,
+        queue_id: queueId,
+        type,
+        payload,
+        status: "pending",
+        priority,
+        max_attempts: maxAttempts,
+        attempts: 0,
+      },
+    });
+    createdJobId = job.id;
+    const bullJob = await enqueueAiTask({
+      dbJobId: job.id,
+      userId,
       type,
       payload,
-      status: "pending",
       priority,
-    },
-  });
-  const bullJob = await enqueueAiTask({
-    dbJobId: job.id,
-    userId,
-    type,
-    payload,
-    priority,
-  });
-  await prisma.job.update({
-    where: { id: job.id },
-    data: { bull_job_id: bullJob.id ?? null },
-  });
-  return prisma.job.findUniqueOrThrow({ where: { id: job.id } });
+    });
+    await prisma.job.update({
+      where: { id: job.id },
+      data: { bull_job_id: bullJob.id ?? null },
+    });
+    await rememberDedupJob(userId, type, payload, job.id);
+    return prisma.job.findUniqueOrThrow({ where: { id: job.id } });
+  } catch (e) {
+    await rate.release();
+    if (createdJobId) {
+      await prisma.job.delete({ where: { id: createdJobId } }).catch(() => {});
+    }
+    throw e;
+  }
 }
 
 export async function createSummariseJobFromPdf(
@@ -153,37 +208,51 @@ export async function retryJob(userId: string, jobId: string) {
     throw new ApiError(404, "Job not found");
   }
   if (job.status !== "failed") {
-    throw new ApiError(400, "Only failed jobs can be retried");
+    throw new ApiError(
+      400,
+      "Only failed jobs can be retried (dead jobs exhausted all attempts)",
+    );
   }
   const userRow = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
   });
   const userPlan = userRow.plan as UserPlan;
-  const priority = priorityForPlan(userPlan);
-  const payload = job.payload as Prisma.InputJsonValue;
   const jType = job.type as JobType;
-  await prisma.job.update({
-    where: { id: job.id },
-    data: {
-      status: "pending",
-      error: null,
-      attempts: { increment: 1 },
-      started_at: null,
-      completed_at: null,
-      result: Prisma.DbNull,
+  const payload = job.payload as Prisma.InputJsonValue;
+
+  await enforceJobPolicies(userId, userPlan, jType, payload, {
+    skipDedup: true,
+  });
+  const rate = await consumeJobRateSlots(userId, userPlan);
+
+  try {
+    const priority = priorityForPlan(userPlan);
+    await prisma.job.update({
+      where: { id: job.id },
+      data: {
+        status: "pending",
+        error: null,
+        attempts: 0,
+        started_at: null,
+        completed_at: null,
+        result: Prisma.DbNull,
+        priority,
+      },
+    });
+    const bullJob = await enqueueAiTask({
+      dbJobId: job.id,
+      userId,
+      type: jType,
+      payload,
       priority,
-    },
-  });
-  const bullJob = await enqueueAiTask({
-    dbJobId: job.id,
-    userId,
-    type: jType,
-    payload,
-    priority,
-  });
-  await prisma.job.update({
-    where: { id: job.id },
-    data: { bull_job_id: bullJob.id ?? null },
-  });
-  return prisma.job.findUniqueOrThrow({ where: { id: job.id } });
+    });
+    await prisma.job.update({
+      where: { id: job.id },
+      data: { bull_job_id: bullJob.id ?? null },
+    });
+    return prisma.job.findUniqueOrThrow({ where: { id: job.id } });
+  } catch (e) {
+    await rate.release();
+    throw e;
+  }
 }

@@ -9,6 +9,7 @@ import { processGenerateImageJob } from "./processors/generate-image.js";
 import { processSummariseJob } from "./processors/summarise.js";
 import { processTranscribeJob } from "./processors/transcribe.js";
 import { processTranslateJob } from "./processors/translate.js";
+import { recordUsageOutcome } from "./lib/usage-daily.js";
 
 const connection = new Redis(env.REDIS_URL, {
   maxRetriesPerRequest: null,
@@ -69,20 +70,27 @@ new Worker<AiTaskJobData>(
 
     try {
       await runProcessor(type, { dbJobId, userId, payload });
+      await recordUsageOutcome(userId, "completed");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Unknown error";
+      const row = await prisma.job.findUnique({ where: { id: dbJobId } });
+      const nextAttempts = (row?.attempts ?? 0) + 1;
+      const maxA = row?.max_attempts ?? 3;
+      const isDead = nextAttempts >= maxA;
       await prisma.job.update({
         where: { id: dbJobId },
         data: {
-          status: "failed",
+          status: isDead ? "dead" : "failed",
           completed_at: new Date(),
           error: msg,
+          attempts: nextAttempts,
         },
       });
+      await recordUsageOutcome(userId, isDead ? "dead" : "failed");
       await publishJobUpdate({
         jobId: dbJobId,
         userId,
-        status: "failed",
+        status: isDead ? "dead" : "failed",
         error: msg,
       });
     }

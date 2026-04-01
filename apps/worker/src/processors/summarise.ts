@@ -1,9 +1,9 @@
 import { createRequire } from "node:module";
-import OpenAI from "openai";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { publishJobUpdate } from "../lib/job-events.js";
 import { fetchBinaryFromCloudinaryUrl } from "../lib/cloudinary-fetch.js";
+import { getGemini } from "../lib/gemini-client.js";
 import { env } from "../config/env.js";
 
 const require = createRequire(import.meta.url);
@@ -24,8 +24,6 @@ const payloadSchema = z.discriminatedUnion("source", [
     mimeType: z.string(),
   }),
 ]);
-
-const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
 
 const CHUNK_SIZE = 12_000;
 const CHUNK_OVERLAP = 200;
@@ -52,25 +50,20 @@ async function completeSummary(
   userContent: string,
   instruction: string,
 ): Promise<string> {
-  const res = await openai.chat.completions.create({
-    model: env.OPENAI_MODEL,
-    temperature: 0.3,
-    max_tokens: 4096,
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are a precise assistant. Output clear Markdown. Be faithful to the source; do not invent facts.",
-      },
-      {
-        role: "user",
-        content: `${instruction}\n\n---\n\n${userContent}`,
-      },
-    ],
+  const ai = getGemini();
+  const res = await ai.models.generateContent({
+    model: env.GEMINI_MODEL,
+    contents: `${instruction}\n\n---\n\n${userContent}`,
+    config: {
+      systemInstruction:
+        "You are a precise assistant. Output clear Markdown. Be faithful to the source; do not invent facts.",
+      temperature: 0.3,
+      maxOutputTokens: 8192,
+    },
   });
-  const out = res.choices[0]?.message?.content?.trim();
+  const out = res.text?.trim();
   if (!out) {
-    throw new Error("OpenAI returned empty summary");
+    throw new Error("Gemini returned empty summary");
   }
   return out;
 }
@@ -151,7 +144,7 @@ export async function processSummariseJob(input: {
 
   const result = {
     summary,
-    model: env.OPENAI_MODEL,
+    model: env.GEMINI_MODEL,
     source,
   };
 
