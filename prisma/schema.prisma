@@ -5,18 +5,36 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE")
+  // url      = env("DATABASE")
 }
 
 model User {
-  id         String   @id @default(uuid()) @db.Uuid
-  email      String   @unique
-  password   String
-  plan       String   @default("free") // "free" | "pro" | "admin"
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  queues     Queue[]
-  jobs       Job[]
-  usageDaily UsageDaily[]
+  id              String           @id @default(uuid()) @db.Uuid
+  email           String           @unique
+  password        String
+  plan            String           @default("free") // "free" | "pro" | "admin"
+  created_at      DateTime         @default(now()) @db.Timestamptz(6)
+  queues          Queue[]
+  jobs            Job[]
+  usageDaily      UsageDaily[]
+  upgradeRequests UpgradeRequest[]
+}
+
+model UpgradeRequest {
+  id          String    @id @default(uuid()) @db.Uuid
+  user_id     String    @db.Uuid
+  status      String    @default("pending") // pending | approved | rejected
+  target_plan String    @default("pro")
+  created_at          DateTime  @default(now()) @db.Timestamptz(6)
+  reviewed_at         DateTime? @db.Timestamptz(6)
+  reviewed_by         String?   @db.Uuid
+  razorpay_order_id   String?
+  razorpay_payment_id String?
+  amount              Int?
+  user                User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([status])
 }
 
 /// Per-user UTC-day aggregates for Phase 4 (worker outcomes; submission counts use Job rows).

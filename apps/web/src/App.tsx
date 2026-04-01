@@ -27,6 +27,7 @@ import { Dashboard } from "./pages/Dashboard.js";
 import { NewJob } from "./pages/NewJob.js";
 import { JobResult } from "./pages/JobResult.js";
 import { Admin } from "./pages/Admin.js";
+import { ToastContainer } from "./components/Toast.js";
 
 function SocketBridge() {
   const { user } = useAuth();
@@ -136,7 +137,51 @@ function Sidebar() {
           </div>
           {user?.plan === "free" && (
             <button
-              onClick={() => {}}
+              onClick={async () => {
+                try {
+                  const { loadRazorpayScript } = await import("./utils/razorpay.js");
+                  const isLoaded = await loadRazorpayScript();
+                  if (!isLoaded) throw new Error("Razorpay SDK failed to load. Check your internet connection.");
+
+                  const { createRazorpayOrder, verifyRazorpayPayment } = await import("./api/upgrade.api.js");
+                  const { showToast } = await import("./components/Toast.js");
+
+                  const order = await createRazorpayOrder("pro");
+
+                  const options = {
+                    key: order.key_id,
+                    amount: order.amount,
+                    currency: order.currency,
+                    name: "The Orchestrator",
+                    description: "Upgrade to Pro Plan",
+                    order_id: order.orderId,
+                    handler: async (response: any) => {
+                      try {
+                        await verifyRazorpayPayment({
+                          razorpay_order_id: response.razorpay_order_id,
+                          razorpay_payment_id: response.razorpay_payment_id,
+                          razorpay_signature: response.razorpay_signature,
+                        });
+                        showToast("success", "Payment successful! Your plan has been upgraded to Pro. 🎉");
+                      } catch (err: any) {
+                        showToast("error", err.message || "Payment verification failed.");
+                      }
+                    },
+                    prefill: {
+                      email: user?.email,
+                    },
+                    theme: {
+                      color: "#4f46e5", // indigo-600
+                    },
+                  };
+
+                  const rzp = new (window as any).Razorpay(options);
+                  rzp.open();
+                } catch (e: any) {
+                  const { showToast } = await import("./components/Toast.js");
+                  showToast("error", e.message || "Failed to initiate upgrade");
+                }
+              }}
               className="mt-3 w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors"
             >
               Upgrade to Pro
@@ -238,6 +283,7 @@ export function App() {
     <BrowserRouter>
       <Layout>
         <SocketBridge />
+        <ToastContainer />
         <Routes>
           <Route path="/" element={<Protected><Dashboard /></Protected>} />
           <Route path="/jobs/new" element={<Protected><NewJob /></Protected>} />

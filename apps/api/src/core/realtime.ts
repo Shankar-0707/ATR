@@ -5,7 +5,9 @@ import { Redis } from "ioredis";
 import { Server } from "socket.io";
 import {
   JOB_UPDATES_CHANNEL,
+  UPGRADE_REQUEST_CHANNEL,
   type JobUpdatePayload,
+  type UpgradeRequestUpdatePayload,
 } from "@ai-task-runner/shared";
 import { env } from "../config/env.js";
 import { AUTH_COOKIE_NAME } from "../modules/auth/auth.cookies.js";
@@ -51,17 +53,24 @@ export function attachRealtime(httpServer: HttpServer): Server {
     maxRetriesPerRequest: null,
   });
 
-  void subscriber.subscribe(JOB_UPDATES_CHANNEL).catch((err) => {
+  void subscriber.subscribe(JOB_UPDATES_CHANNEL, UPGRADE_REQUEST_CHANNEL).catch((err) => {
     console.error("Redis subscribe failed:", err);
   });
 
-  subscriber.on("message", (_channel, message) => {
+  subscriber.on("message", (channel, message) => {
     try {
-      const data = JSON.parse(message) as JobUpdatePayload;
-      if (!data.userId || !data.jobId) {
-        return;
+      if (channel === JOB_UPDATES_CHANNEL) {
+        const data = JSON.parse(message) as JobUpdatePayload;
+        if (!data.userId || !data.jobId) return;
+        io.to(`user:${data.userId}`).emit("job:update", data);
+      } else if (channel === UPGRADE_REQUEST_CHANNEL) {
+        const data = JSON.parse(message) as UpgradeRequestUpdatePayload;
+        if (!data.userId || !data.requestId) return;
+        // Notify the user
+        io.to(`user:${data.userId}`).emit("upgrade:update", data);
+        // Notify all admins
+        io.emit("upgrade:admin", data);
       }
-      io.to(`user:${data.userId}`).emit("job:update", data);
     } catch {
       /* ignore malformed */
     }

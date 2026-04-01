@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.js";
 import * as adminApi from "../api/admin.api.js";
+import * as upgradeApi from "../api/upgrade.api.js";
 import {
-  Users, Rocket, CheckCircle2, Loader2, Clock, XCircle,
-  ChevronLeft, ChevronRight, Filter, Terminal, TrendingUp,
+  Users, Rocket,
+  ChevronLeft, Filter, Terminal, TrendingUp,
+  ArrowUpCircle, Check, X,
+  Zap,
 } from "lucide-react";
 
 function PlanBadge({ plan }: { plan: string }) {
@@ -40,14 +43,30 @@ function StatusDot({ status }: { status: string }) {
 
 export function Admin() {
   const { user } = useAuth();
+  const qc = useQueryClient();
   const [userPage, setUserPage] = useState(0);
   const [jobPage, setJobPage] = useState(0);
   const [jobStatus, setJobStatus] = useState("");
+  const [upgradeStatus, setUpgradeStatus] = useState("");
   const PAGE = 5;
 
   const stats = useQuery({ queryKey: ["admin", "stats"], queryFn: adminApi.fetchAdminStats, enabled: user?.plan === "admin" });
   const users = useQuery({ queryKey: ["admin", "users", userPage], queryFn: () => adminApi.fetchAdminUsers(PAGE, userPage * PAGE), enabled: user?.plan === "admin" });
   const jobs  = useQuery({ queryKey: ["admin", "jobs", jobPage, jobStatus], queryFn: () => adminApi.fetchAdminJobs(PAGE, jobPage * PAGE, jobStatus || undefined), enabled: user?.plan === "admin" });
+  const upgradeRequests = useQuery({
+    queryKey: ["admin", "upgrade-requests", upgradeStatus],
+    queryFn: () => upgradeApi.listUpgradeRequests(upgradeStatus || undefined, 50, 0),
+    enabled: user?.plan === "admin",
+    refetchInterval: 5000,
+  });
+
+  const reviewMutation = useMutation({
+    mutationFn: ({ id, approve }: { id: string; approve: boolean }) =>
+      upgradeApi.reviewUpgradeRequest(id, approve),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["admin", "upgrade-requests"] });
+    },
+  });
 
   if (user?.plan !== "admin") return <Navigate to="/" replace />;
 
@@ -116,6 +135,93 @@ export function Admin() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Upgrade Requests */}
+      <div className="bg-[#161b22] border border-white/5 rounded-2xl mb-6 overflow-hidden">
+        <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-white flex items-center gap-2">
+              <ArrowUpCircle size={18} className="text-indigo-400" />
+              Upgrade Requests
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">Review and approve user plan upgrades</p>
+          </div>
+          <select
+            value={upgradeStatus}
+            onChange={e => setUpgradeStatus(e.target.value)}
+            className="bg-[#0d1117] border border-white/8 rounded-lg px-2 py-1 text-xs text-gray-400 focus:outline-none focus:border-indigo-500/50"
+          >
+            <option value="">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+
+        {upgradeRequests.isLoading ? (
+          <div className="px-6 py-8 text-center text-gray-600">Loading...</div>
+        ) : upgradeRequests.data?.items.length === 0 ? (
+          <div className="px-6 py-8 text-center text-gray-600">No upgrade requests</div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {upgradeRequests.data?.items.map((req) => (
+              <div key={req.id} className="px-6 py-4 flex items-center justify-between hover:bg-white/2 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
+                    {req.user?.email[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-200">{req.user?.email}</p>
+                    <p className="text-xs text-gray-600">
+                      {req.user?.plan} → {req.target_plan} •{" "}
+                      {new Date(req.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {req.status === "pending" ? (
+                    req.razorpay_order_id ? (
+                      <span className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-semibold">
+                        <Zap size={13} className="animate-pulse" /> Awaiting Payment
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => reviewMutation.mutate({ id: req.id, approve: true })}
+                          disabled={reviewMutation.isPending}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/30 text-emerald-300 text-xs font-semibold transition-all disabled:opacity-50"
+                        >
+                          <Check size={13} /> Approve
+                        </button>
+                        <button
+                          onClick={() => reviewMutation.mutate({ id: req.id, approve: false })}
+                          disabled={reviewMutation.isPending}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/40 border border-red-500/30 text-red-300 text-xs font-semibold transition-all disabled:opacity-50"
+                        >
+                          <X size={13} /> Reject
+                        </button>
+                      </>
+                    )
+                  ) : (
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={`text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full border ${
+                        req.status === "approved"
+                          ? "text-emerald-400 border-emerald-500/40 bg-emerald-500/10"
+                          : "text-red-400 border-red-500/40 bg-red-500/10"
+                      }`}>
+                        {req.status}
+                      </span>
+                      {req.razorpay_payment_id && (
+                        <span className="text-[9px] text-gray-600 font-mono">TX: {req.razorpay_payment_id}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Users table */}
