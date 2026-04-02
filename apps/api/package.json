@@ -12,6 +12,8 @@
     "@ai-task-runner/shared": "*",
     "@aws-sdk/client-s3": "^3.726.0",
     "@prisma/client": "^6.0.0",
+    "@sentry/node": "^10.47.0",
+    "@sentry/profiling-node": "^10.47.0",
     "bcrypt": "^5.1.1",
     "bullmq": "^5.34.5",
     "cloudinary": "^2.5.1",
@@ -25,6 +27,7 @@
     "multer": "^1.4.5-lts.1",
     "razorpay": "^2.9.6",
     "socket.io": "^4.8.1",
+    "winston": "^3.19.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

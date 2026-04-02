@@ -6,8 +6,12 @@ const schema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
+  LOG_LEVEL: z
+    .enum(["error", "warn", "info", "http", "verbose", "debug", "silly"])
+    .default("info"),
   DATABASE: z.string().min(1, "DATABASE is required"),
   REDIS_URL: z.string().min(1, "REDIS_URL is required"),
+  SENTRY_DSN: z.string().trim().min(1).optional(),
   GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY is required"),
   GEMINI_MODEL: z.string().optional(),
   GEMINI_TRANSLATION_MODEL: z.string().optional(),
