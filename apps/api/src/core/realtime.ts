@@ -10,6 +10,7 @@ import {
   type UpgradeRequestUpdatePayload,
 } from "@ai-task-runner/shared";
 import { env } from "../config/env.js";
+import { logger } from "./lib/logger.js";
 import { AUTH_COOKIE_NAME } from "../modules/auth/auth.cookies.js";
 
 type JwtPayload = { sub: string };
@@ -54,7 +55,10 @@ export function attachRealtime(httpServer: HttpServer): Server {
   });
 
   void subscriber.subscribe(JOB_UPDATES_CHANNEL, UPGRADE_REQUEST_CHANNEL).catch((err) => {
-    console.error("Redis subscribe failed:", err);
+    logger.error("Redis subscribe failed", {
+      error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
   });
 
   subscriber.on("message", (channel, message) => {

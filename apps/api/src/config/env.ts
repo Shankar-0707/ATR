@@ -4,10 +4,14 @@ const schema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
+  LOG_LEVEL: z
+    .enum(["error", "warn", "info", "http", "verbose", "debug", "silly"])
+    .default("info"),
   PORT: z.coerce.number().default(3001),
   DATABASE: z.string().min(1, "DATABASE is required"),
   REDIS_URL: z.string().min(1, "REDIS_URL is required"),
   JWT_SECRET: z.string().min(16, "JWT_SECRET must be at least 16 characters"),
+  SENTRY_DSN: z.string().trim().min(1).optional(),
   /** When true, auth cookie sets `Secure` (HTTPS). Set `COOKIE_SECURE=true` in production. */
   COOKIE_SECURE: z.preprocess(
     (val) => val === "true" || val === true,

@@ -1,10 +1,13 @@
 import Razorpay from "razorpay";
+import { logger } from "./logger.js";
 
 const key_id = process.env.RAZORPAY_KEY_ID;
 const key_secret = process.env.RAZORPAY_KEY_SECRET;
 
 if (!key_id || !key_secret) {
-  console.warn("RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET is not defined in environment variables. Razorpay integration will not work.");
+  logger.warn(
+    "Razorpay credentials are missing; payment integration will be disabled",
+  );
 }
 
 export const razorpay = new Razorpay({

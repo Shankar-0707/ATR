@@ -1,6 +1,8 @@
+import * as Sentry from "@sentry/node";
 import type { NextFunction, Request, Response } from "express";
 import multer from "multer";
 import { ZodError } from "zod";
+import { logger } from "../lib/logger.js";
 
 export class ApiError extends Error {
   constructor(
@@ -15,11 +17,28 @@ export class ApiError extends Error {
 
 export function errorMiddleware(
   err: unknown,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction,
 ): void {
+  const meta = {
+    method: req.method,
+    path: req.originalUrl,
+    userId:
+      typeof req.user === "object" &&
+      req.user !== null &&
+      "id" in req.user &&
+      typeof req.user.id === "string"
+        ? req.user.id
+        : undefined,
+  };
+
   if (err instanceof multer.MulterError) {
+    logger.warn("Upload validation failed", {
+      ...meta,
+      code: err.code,
+      message: err.message,
+    });
     if (err.code === "LIMIT_FILE_SIZE") {
       res.status(400).json({ error: "File too large (max 15 MB)" });
       return;
@@ -32,10 +51,18 @@ export function errorMiddleware(
     (err.message === "Only application/pdf is allowed" ||
       err.message.startsWith("Only common audio types"))
   ) {
+    logger.warn("File validation failed", {
+      ...meta,
+      message: err.message,
+    });
     res.status(400).json({ error: err.message });
     return;
   }
   if (err instanceof ZodError) {
+    logger.warn("Request validation failed", {
+      ...meta,
+      details: err.flatten(),
+    });
     res.status(400).json({
       error: "Validation failed",
       details: err.flatten(),
@@ -43,12 +70,32 @@ export function errorMiddleware(
     return;
   }
   if (err instanceof ApiError) {
+    if (err.statusCode >= 500) {
+      Sentry.captureException(err, { extra: { ...meta, details: err.details } });
+      logger.error("API request failed", {
+        ...meta,
+        statusCode: err.statusCode,
+        details: err.details,
+        stack: err.stack,
+      });
+    } else {
+      logger.warn("API request rejected", {
+        ...meta,
+        statusCode: err.statusCode,
+        details: err.details,
+      });
+    }
     res.status(err.statusCode).json({
       error: err.message,
       ...(err.details !== undefined ? { details: err.details } : {}),
     });
     return;
   }
-  console.error(err);
+  Sentry.captureException(err, { extra: meta });
+  logger.error("Unhandled request error", {
+    ...meta,
+    error: err instanceof Error ? err.message : String(err),
+    stack: err instanceof Error ? err.stack : undefined,
+  });
   res.status(500).json({ error: "Internal server error" });
 }

@@ -12,10 +12,12 @@
     "@ai-task-runner/shared": "*",
     "@google/genai": "^1.47.0",
     "@prisma/client": "^6.0.0",
+    "@sentry/node": "^10.47.0",
     "bullmq": "^5.34.5",
     "dotenv": "^16.4.7",
     "ioredis": "^5.4.2",
     "pdf-parse": "^1.1.1",
+    "winston": "^3.19.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
