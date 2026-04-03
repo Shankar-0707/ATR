@@ -32,14 +32,14 @@ export function Login() {
         <div className="w-14 h-14 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center mb-4">
           <Zap size={28} className="text-indigo-400" />
         </div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">The Orchestrator</h1>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Task Runner</h1>
         <p className="text-sm text-gray-500 mt-1">Mission Control for AI Operations</p>
       </div>
 
       {/* Card */}
       <div className="w-full max-w-sm bg-[#161b22] border border-white/8 rounded-2xl p-7 slide-in shadow-2xl">
         <h2 className="text-lg font-semibold text-white mb-1">Welcome back</h2>
-        <p className="text-sm text-gray-500 mb-6">Enter your credentials to access the console.</p>
+        <p className="text-sm text-gray-500 mb-6">Enter your credentials to access.</p>
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <div>
@@ -60,7 +60,7 @@ export function Login() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-[11px] uppercase tracking-widest text-gray-500 font-semibold">Password</label>
-              <button type="button" className="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold uppercase tracking-widest">Forgot?</button>
+              {/* <button type="button" className="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold uppercase tracking-widest">Forgot?</button> */}
             </div>
             <div className="relative">
               <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -97,13 +97,13 @@ export function Login() {
             )}
           </button>
 
-          <div className="relative flex items-center gap-3 my-1">
+          {/* <div className="relative flex items-center gap-3 my-1">
             <div className="flex-1 h-px bg-white/8" />
             <span className="text-[11px] text-gray-600 uppercase tracking-widest">or continue with</span>
             <div className="flex-1 h-px bg-white/8" />
-          </div>
+          </div> */}
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* <div className="grid grid-cols-2 gap-3">
             {["SSO", "API Key"].map((label) => (
               <button
                 key={label}
@@ -113,7 +113,7 @@ export function Login() {
                 {label}
               </button>
             ))}
-          </div>
+          </div> */}
         </form>
       </div>
 
@@ -123,11 +123,11 @@ export function Login() {
           Create an account
         </Link>
       </p>
-
+{/* 
       <button className="fixed bottom-5 right-5 text-xs text-gray-600 hover:text-gray-400 flex items-center gap-1 transition-colors">
         <span className="w-4 h-4 rounded-full border border-gray-700 flex items-center justify-center text-[10px]">?</span>
         Support
-      </button>
+      </button> */}
     </div>
   );
 }
