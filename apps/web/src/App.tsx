@@ -105,7 +105,7 @@ function Sidebar() {
           <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
             <Zap size={14} className="text-white" />
           </div>
-          <span className="font-bold text-white text-sm tracking-wide">The Orchestrator</span>
+          <span className="font-bold text-white text-sm tracking-wide">Task Runner</span>
         </div>
         {user && (
           <span className="text-[10px] uppercase tracking-widest text-indigo-400 font-semibold ml-9">
@@ -192,8 +192,8 @@ function Sidebar() {
 
       {/* Bottom */}
       <div className="px-3 py-3 border-t border-white/5 flex flex-col gap-1">
-        <NavItem to="/settings" icon={Settings} label="Settings" active={false} />
-        <NavItem to="/support" icon={HelpCircle} label="Support" active={false} />
+        {/* <NavItem to="/settings" icon={Settings} label="Settings" active={false} /> */}
+        {/* <NavItem to="/support" icon={HelpCircle} label="Support" active={false} /> */}
         {user && (
           <button
             onClick={() => logout.mutate()}
@@ -218,7 +218,7 @@ function Topbar() {
   });
 
   const crumbs: Record<string, string> = {
-    "/": "Orchestrator Console",
+    "/": "User Console",
     "/jobs/new": "Create New Job",
     "/admin": "Admin Control",
   };
