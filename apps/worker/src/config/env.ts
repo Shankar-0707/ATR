@@ -18,6 +18,8 @@ const schema = z.object({
   GEMINI_IMAGE_MODEL: z.string().optional(),
   GEMINI_IMAGE_SIZE: z.string().optional(),
   GEMINI_TRANSCRIPTION_MODEL: z.string().optional(),
+  CLOUDINARY_CLOUD_NAME: z.string().min(1, "CLOUDINARY_CLOUD_NAME is required"),
+  CLOUDINARY_API_KEY: z.string().min(1, "CLOUDINARY_API_KEY is required"),
   CLOUDINARY_API_SECRET: z.string().min(1, "CLOUDINARY_API_SECRET is required"),
   PORT: z.coerce.number().default(3001),
 });
