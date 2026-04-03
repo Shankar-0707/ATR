@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   FileText, Image, Languages, Mic, Zap, TrendingUp,
   ChevronRight, Clock, AlertCircle, CheckCircle2, Loader2,
-  XCircle, Skull,
+   Skull,
 } from "lucide-react";
 import { useJobsList } from "../hooks/useJobs.js";
 import { fetchUsage } from "../api/usage.api.js";
@@ -130,7 +130,7 @@ export function Dashboard() {
       <div className="flex items-start justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Job Execution History</h1>
-          <p className="text-gray-500 text-sm mt-1">Monitor and manage your active AI orchestrations.</p>
+          <p className="text-gray-500 text-sm mt-1">Monitor and manage your active AI Works.</p>
         </div>
         <button
           onClick={() => nav("/jobs/new")}

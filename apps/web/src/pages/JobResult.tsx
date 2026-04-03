@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  ChevronRight, RefreshCw, AlertCircle, CheckCircle2,
-  Clock, Loader2, Skull, Pause, FileText, Image, Languages, Mic,
-  Cpu, Zap, BarChart3, Terminal,
+  ChevronRight, RefreshCw, AlertCircle, 
+   Skull, Pause, FileText, Image, Languages, Mic,
+ Zap, BarChart3, 
 } from "lucide-react";
 import * as jobsApi from "../api/jobs.api.js";
 import { useJob } from "../hooks/useJobs.js";
@@ -184,12 +184,12 @@ export function JobResult() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-base font-semibold text-white">Real-time Execution</h2>
-                <p className="text-xs text-gray-500 mt-0.5">Worker: AI-Node-04 • Regional: US-East-1</p>
+                {/* <p className="text-xs text-gray-500 mt-0.5">Worker: AI-Node-04 • Regional: US-East-1</p> */}
               </div>
               {progress > 0 && (
                 <div className="text-right">
                   <span className="text-3xl font-bold text-indigo-400">{progress}%</span>
-                  <p className="text-[10px] uppercase tracking-widest text-gray-600">Completion</p>
+                  {/* <p className="text-[10px] uppercase tracking-widest text-gray-600">Completion</p> */}
                 </div>
               )}
             </div>
@@ -236,7 +236,7 @@ export function JobResult() {
             <h2 className="text-base font-semibold text-white mb-4">Task Parameters</h2>
             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
               {[
-                { label: "Model Engine", value: "Gemini 2.5 Flash" },
+                // { label: "Model Engine", value: "Gemini 2.5 Flash" },
                 { label: "Token Limit", value: "128,000 Context" },
                 { label: "Attempts", value: `${job.attempts} / ${job.max_attempts}` },
                 { label: "Priority", value: job.priority === 1 ? "Ultra High (Tier 1)" : `Tier ${job.priority}`, highlight: job.priority === 1 },
@@ -297,15 +297,15 @@ export function JobResult() {
               <p className="text-xs text-gray-400 mb-3">
                 The AI is currently mapping distinct data silos into a single narrative flow.
               </p>
-              <div className="flex flex-wrap gap-1.5">
+              {/* <div className="flex flex-wrap gap-1.5">
                 {["#finance", "#legal", "#tech-spec"].map(tag => (
                   <span key={tag} className="text-[10px] text-gray-500 border border-white/8 rounded px-2 py-0.5">{tag}</span>
                 ))}
-              </div>
+              </div> */}
             </div>
           </div>
 
-          {/* Global actions */}
+          {/* Global actions
           <div className="bg-[#161b22] border border-white/5 rounded-2xl p-4">
             <p className="text-xs font-semibold text-gray-400 mb-3">Global Actions</p>
             <div className="flex flex-col gap-2">
@@ -316,7 +316,7 @@ export function JobResult() {
                 <Terminal size={12} /> View Full Log
               </button>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

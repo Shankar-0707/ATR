@@ -71,6 +71,7 @@ export function NewJob() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white tracking-tight">Create New Job</h1>
         <p className="text-gray-500 text-sm mt-1">Select an AI engine to process your request.</p>
+        <p className="text-gray-500 text-sm mt-1">Remember In Free Plan Image is not available.</p>
       </div>
 
       <div className="flex gap-6">

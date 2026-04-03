@@ -31,13 +31,13 @@ export function Register() {
         <div className="w-14 h-14 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center mb-4">
           <Zap size={28} className="text-indigo-400" />
         </div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">The Orchestrator</h1>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Task Runner</h1>
         <p className="text-sm text-gray-500 mt-1">Mission Control for AI Operations</p>
       </div>
 
       <div className="w-full max-w-sm bg-[#161b22] border border-white/8 rounded-2xl p-7 slide-in shadow-2xl">
         <h2 className="text-lg font-semibold text-white mb-1">Create account</h2>
-        <p className="text-sm text-gray-500 mb-6">Start orchestrating AI tasks in seconds.</p>
+        {/* <p className="text-sm text-gray-500 mb-6">Start orchestrating AI tasks in seconds.</p> */}
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <div>
