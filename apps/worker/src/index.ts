@@ -24,7 +24,24 @@ const connection = new Redis(env.REDIS_URL, {
   maxRetriesPerRequest: null,
 });
 
+import http from "node:http";
+
 const QUEUE_NAME = "ai-tasks";
+
+// Add a simple HTTP health check server for Render (Free Web Service mode)
+const server = http.createServer((req, res) => {
+  if (req.url === "/health" || req.url === "/") {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("OK");
+  } else {
+    res.writeHead(404);
+    res.end();
+  }
+});
+
+server.listen(env.PORT, "0.0.0.0", () => {
+  logger.info("Health check server active", { port: env.PORT });
+});
 
 type AiTaskJobData = {
   dbJobId: string;
