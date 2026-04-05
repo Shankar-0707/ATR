@@ -27,6 +27,16 @@ export function useJobSocket(enabled: boolean) {
     socket.on("job:update", (payload: JobUpdatePayload) => {
       void qc.invalidateQueries({ queryKey: ["jobs", "list"] });
       void qc.invalidateQueries({ queryKey: ["jobs", "one", payload.jobId] });
+      
+      if (payload.status === "failed") {
+        import("../components/Toast.js").then(({ showToast }) => {
+          showToast("error", "Job failed");
+        });
+      } else if (payload.status === "completed") {
+        import("../components/Toast.js").then(({ showToast }) => {
+          showToast("success", "Job success");
+        });
+      }
     });
 
     socket.on("upgrade:update", (payload: UpgradeRequestUpdatePayload) => {

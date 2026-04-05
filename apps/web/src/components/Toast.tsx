@@ -1,63 +1,54 @@
-import { useEffect, useState } from "react";
-import { CheckCircle2, XCircle, X } from "lucide-react";
+import toast, { Toaster as HotToaster } from "react-hot-toast";
 
 type ToastType = "success" | "error";
 
-let toastId = 0;
-const listeners = new Set<(toast: ToastData) => void>();
+export function showToast(type: ToastType, message?: any) {
+  let displayMessage = message;
 
-type ToastData = {
-  id: number;
-  type: ToastType;
-  message: string;
-};
+  // We enforce minimal "Job failed" / "Job success" text everywhere unless it pertains to payments
+  const isPaymentMsg = typeof message === "string" && (message.includes("Payment") || message.includes("upgrade") || message.includes("Pro"));
+  
+  if (!isPaymentMsg) {
+      if (type === "success" && message && typeof message === "string" && message.includes("success")) {
+         displayMessage = "Job success";
+      } else if (type === "error" && message && typeof message === "string" && message.includes("failed")) {
+         displayMessage = "Job failed";
+      } else {
+         displayMessage = type === "error" ? "Job failed" : "Job success";
+      }
+  } else {
+      displayMessage = message; // Keep meaningful strings for payment events
+  }
 
-export function showToast(type: ToastType, message: string) {
-  const toast: ToastData = { id: toastId++, type, message };
-  listeners.forEach((fn) => fn(toast));
+  const style: React.CSSProperties = {
+    background: "#18181b", // zinc-900
+    color: "#e4e4e7", // zinc-200
+    border: "1px solid #27272a", // zinc-800
+    fontSize: "14px",
+    maxWidth: "500px",
+    wordBreak: "break-word",
+  };
+
+  if (type === "success") {
+    toast.success(displayMessage, {
+      style,
+      iconTheme: {
+        primary: "#10b981",
+        secondary: "#18181b",
+      },
+    });
+  } else {
+    toast.error(displayMessage, {
+      style,
+      iconTheme: {
+        primary: "#ef4444",
+        secondary: "#18181b",
+      },
+      duration: 5000,
+    });
+  }
 }
 
 export function ToastContainer() {
-  const [toasts, setToasts] = useState<ToastData[]>([]);
-
-  useEffect(() => {
-    const handler = (toast: ToastData) => {
-      setToasts((prev) => [...prev, toast]);
-      setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id !== toast.id));
-      }, 5000);
-    };
-    listeners.add(handler);
-    return () => {
-      listeners.delete(handler);
-    };
-  }, []);
-
-  return (
-    <div className="fixed top-20 right-6 z-50 flex flex-col gap-2 pointer-events-none">
-      {toasts.map((toast) => (
-        <div
-          key={toast.id}
-          className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl slide-in ${
-            toast.type === "success"
-              ? "bg-emerald-900/90 border-emerald-500/40 text-emerald-100"
-              : "bg-red-900/90 border-red-500/40 text-red-100"
-          }`}
-        >
-          {toast.type === "success" ? (
-            <CheckCircle2 size={18} className="flex-shrink-0" />
-          ) : (
-            <XCircle size={18} className="flex-shrink-0" />
-          )}
-          <span className="text-sm font-medium">{toast.message}</span>
-          <button
-            onClick={() => setToasts((prev) => prev.filter((t) => t.id !== toast.id))}
-            className="ml-2 text-white/60 hover:text-white transition-colors"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      ))}
-    </div>
-  );
+  return <HotToaster position="top-right" />;
 }

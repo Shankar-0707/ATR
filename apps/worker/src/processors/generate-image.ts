@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { publishJobUpdate } from "../lib/job-events.js";
-import { getGemini } from "../lib/gemini-client.js";
 import { env } from "../config/env.js";
 
 const sizeEnum = z.enum(["1024x1024", "1792x1024", "1024x1792"]);
@@ -60,29 +59,27 @@ export async function processGenerateImageJob(input: {
   });
 
   const size = p.size ?? env.GEMINI_IMAGE_SIZE;
-  const aspectRatio = sizeToAspectRatio(size);
-  const ai = getGemini();
+  const [widthStr, heightStr] = size.split("x");
+  const width = parseInt(widthStr, 10) || 1024;
+  const height = parseInt(heightStr, 10) || 1024;
+  
+  // Use Pollinations AI for reliable high-quality image generation without API quota limits
+  const encodedPrompt = encodeURIComponent(p.prompt);
+  const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&nologo=true`;
 
-  const res = await ai.models.generateContent({
-    model: env.GEMINI_IMAGE_MODEL,
-    contents: p.prompt,
-    config: {
-      // Image-only output avoids extra text tokens; preview-* image models often have free-tier quota 0.
-      responseModalities: ["IMAGE"],
-      imageConfig: { aspectRatio },
-    },
-  });
-
-  const url = firstImageDataUrl(res);
-  if (!url) {
-    throw new Error("Gemini returned no image data");
+  const pollRes = await fetch(url);
+  if (!pollRes.ok) {
+    throw new Error(`Pollinations AI failed to generate image: ${pollRes.statusText}`);
   }
+  const buffer = await pollRes.arrayBuffer();
+  const base64 = Buffer.from(buffer).toString("base64");
+  const dataUrl = `data:image/jpeg;base64,${base64}`;
 
   const result = {
-    imageUrl: url,
+    imageUrl: dataUrl,
     revisedPrompt: null as string | null,
     size,
-    model: env.GEMINI_IMAGE_MODEL,
+    model: "pollinations-ai-flux",
   };
 
   await prisma.job.update({

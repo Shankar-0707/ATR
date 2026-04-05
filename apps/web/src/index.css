@@ -5,17 +5,17 @@
     box-sizing: border-box;
   }
   body {
-    @apply bg-[#0d1117] text-gray-100 font-sans antialiased;
+    @apply bg-black text-zinc-100 font-sans antialiased;
   }
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-[#161b22];
+    @apply bg-black;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-[#30363d] rounded-full;
+    @apply bg-zinc-800 rounded-full;
   }
 }
 

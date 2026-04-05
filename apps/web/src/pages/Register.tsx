@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { Navigate, useNavigate, Link } from "react-router-dom";
 import { Mail, Lock, ArrowRight, Zap } from "lucide-react";
 import { useAuth } from "../hooks/useAuth.js";
+import { WavyBackground } from "@/components/ui/wavy-background.js";
 
 export function Register() {
   const nav = useNavigate();
@@ -26,16 +27,14 @@ export function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0d1117] flex flex-col items-center justify-center px-4">
+    <WavyBackground>
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4">
       <div className="flex flex-col items-center mb-8 slide-in">
-        <div className="w-14 h-14 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center mb-4">
-          <Zap size={28} className="text-indigo-400" />
-        </div>
+       
         <h1 className="text-2xl font-bold text-white tracking-tight">Task Runner</h1>
-        <p className="text-sm text-gray-500 mt-1">Mission Control for AI Operations</p>
       </div>
 
-      <div className="w-full max-w-sm bg-[#161b22] border border-white/8 rounded-2xl p-7 slide-in shadow-2xl">
+      <div className="w-full max-w-md bg-[#000000] border border-zinc-800 rounded-2xl p-7 slide-in shadow-2xl">
         <h2 className="text-lg font-semibold text-white mb-1">Create account</h2>
         {/* <p className="text-sm text-gray-500 mb-6">Start orchestrating AI tasks in seconds.</p> */}
 
@@ -50,7 +49,7 @@ export function Register() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="name@company.com"
-                className="w-full bg-[#0d1117] border border-white/10 rounded-lg pl-9 pr-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all"
+                className="w-full bg-black border border-zinc-800 rounded-md pl-9 pr-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all"
               />
             </div>
           </div>
@@ -66,13 +65,13 @@ export function Register() {
                 required
                 minLength={8}
                 placeholder="Min. 8 characters"
-                className="w-full bg-[#0d1117] border border-white/10 rounded-lg pl-9 pr-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all"
+                className="w-full bg-black border border-zinc-800 rounded-md pl-9 pr-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all"
               />
             </div>
           </div>
 
           {err && (
-            <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+            <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-md px-3 py-2">
               {err}
             </p>
           )}
@@ -80,12 +79,12 @@ export function Register() {
           <button
             type="submit"
             disabled={register.isPending}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-semibold text-sm transition-all duration-150 mt-1"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-md bg-white text-black hover:bg-zinc-200 disabled:opacity-60 font-semibold text-sm transition-all duration-150 mt-1"
           >
             {register.isPending ? (
               <span className="flex gap-1">
                 {[0,1,2].map(i => (
-                  <span key={i} className="w-1.5 h-1.5 rounded-full bg-white pulse-dot" style={{ animationDelay: `${i*0.15}s` }} />
+                  <span key={i} className="w-1.5 h-1.5 rounded-md bg-white pulse-dot" style={{ animationDelay: `${i*0.15}s` }} />
                 ))}
               </span>
             ) : (
@@ -97,10 +96,11 @@ export function Register() {
 
       <p className="mt-5 text-sm text-gray-600">
         Already have an account?{" "}
-        <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-medium">
+        <Link to="/login" className="text-zinc-400 hover:text-zinc-300 font-medium">
           Sign in
         </Link>
       </p>
     </div>
+    </WavyBackground>
   );
 }
