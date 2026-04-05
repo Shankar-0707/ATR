@@ -42,9 +42,9 @@ function JobCard({ job }: { job: JobRow }) {
   return (
     <div
       onClick={() => nav(`/jobs/${job.id}`)}
-      className="group flex items-center gap-4 bg-[#161b22] hover:bg-[#1c2230] border border-white/5 hover:border-indigo-500/20 rounded-xl px-5 py-4 cursor-pointer transition-all duration-200 slide-in"
+      className="group flex items-center gap-4 bg-[#000000] hover:bg-[#1c2230] border border-zinc-800 hover:border-white/20 rounded-md px-5 py-4 cursor-pointer transition-all duration-200 slide-in"
     >
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+      <div className={`w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0 ${
         job.status === "dead" ? "bg-rose-900/30" :
         job.status === "failed" ? "bg-red-900/30" :
         job.status === "completed" ? "bg-emerald-900/20" :
@@ -59,14 +59,14 @@ function JobCard({ job }: { job: JobRow }) {
           <span className="text-sm font-semibold text-gray-200 truncate">
             {typeLabel[job.type] ?? job.type}
           </span>
-          <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+          <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md border ${
             job.status === "completed" ? "text-emerald-400 border-emerald-500/30 bg-emerald-500/10" :
             job.status === "active"    ? "text-blue-400 border-blue-500/30 bg-blue-500/10" :
             job.status === "failed"    ? "text-red-400 border-red-500/30 bg-red-500/10" :
             job.status === "dead"      ? "text-rose-500 border-rose-500/30 bg-rose-500/10" :
             "text-gray-500 border-gray-600/30 bg-gray-500/10"
           }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${s.dot} ${isActive ? "pulse-dot" : ""}`} />
+            <span className={`w-1.5 h-1.5 rounded-md ${s.dot} ${isActive ? "pulse-dot" : ""}`} />
             {s.label}
           </span>
         </div>
@@ -78,7 +78,7 @@ function JobCard({ job }: { job: JobRow }) {
           {job.error && (
             <span className="text-red-500 truncate max-w-xs flex items-center gap-1">
               <AlertCircle size={10} />
-              {job.error}
+              Failed
             </span>
           )}
           {job.status === "active" && (
@@ -102,7 +102,7 @@ function JobCard({ job }: { job: JobRow }) {
 
 function StatCard({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color?: string }) {
   return (
-    <div className="bg-[#161b22] border border-white/5 rounded-xl p-5">
+    <div className="bg-[#000000] border border-zinc-800 rounded-md p-5">
       <p className="text-[11px] uppercase tracking-widest text-gray-500 mb-3">{label}</p>
       <p className={`text-3xl font-bold ${color ?? "text-white"}`}>{value}</p>
       {sub && <p className="text-xs text-gray-500 mt-1">{sub}</p>}
@@ -134,7 +134,7 @@ export function Dashboard() {
         </div>
         <button
           onClick={() => nav("/jobs/new")}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all duration-150 shadow-lg shadow-indigo-500/20"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-md bg-white text-black hover:bg-zinc-200 text-sm font-semibold transition-all duration-150 "
         >
           <Zap size={15} />
           Execute New Job
@@ -143,8 +143,8 @@ export function Dashboard() {
 
       {/* Usage pill */}
       {usage.data && (
-        <div className="inline-flex items-center gap-2 bg-[#161b22] border border-white/8 rounded-full px-4 py-1.5 text-xs text-gray-400 mb-6">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 pulse-dot" />
+        <div className="inline-flex items-center gap-2 bg-[#000000] border border-zinc-800 rounded-md px-4 py-1.5 text-xs text-gray-400 mb-6">
+          <span className="w-2 h-2 rounded-md bg-emerald-500 pulse-dot" />
           Usage: {usage.data.jobsCreatedToday} / {usage.data.dailyJobLimit} jobs today
         </div>
       )}
@@ -153,7 +153,7 @@ export function Dashboard() {
       <div className="flex flex-col gap-3 mb-10">
         {q.isLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-20 rounded-xl shimmer" />
+            <div key={i} className="h-20 rounded-md shimmer" />
           ))
         ) : items.length === 0 ? (
           <div className="text-center py-16 text-gray-600">
@@ -167,7 +167,7 @@ export function Dashboard() {
 
       {/* Bottom stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-[#161b22] border border-white/5 rounded-xl p-6">
+        <div className="bg-[#000000] border border-zinc-800 rounded-md p-6">
           <p className="text-[11px] uppercase tracking-widest text-gray-500 mb-2">AI Processing Power</p>
           <p className="text-4xl font-bold text-white">
             94.8 <span className="text-lg font-normal text-gray-500">Teraflops</span>
@@ -181,7 +181,7 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-[#161b22] border border-white/5 rounded-xl p-6">
+        <div className="bg-[#000000] border border-zinc-800 rounded-md p-6">
           <p className="text-[11px] uppercase tracking-widest text-gray-500 mb-2">Total Jobs</p>
           <p className="text-4xl font-bold text-white">{total.toLocaleString()}</p>
           <p className="text-xs text-emerald-400 flex items-center gap-1 mt-1 mb-4">
@@ -192,7 +192,7 @@ export function Dashboard() {
             {[3,5,4,7,6,8,9].map((h, i) => (
               <div
                 key={i}
-                className="flex-1 rounded-sm bg-indigo-500/40 hover:bg-indigo-500/70 transition-colors"
+                className="flex-1 rounded-sm bg-white text-black hover:bg-zinc-200/40 hover:bg-white text-black hover:bg-zinc-200/70 transition-colors"
                 style={{ height: `${(h / 9) * 100}%` }}
               />
             ))}

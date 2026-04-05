@@ -20,10 +20,10 @@
   },
   "dependencies": {
     "prisma": "^6.0.0",
+    "react-hot-toast": "^2.6.0",
     "tsx": "^4.19.2",
     "typescript": "~5.7.2"
   },
-  "devDependencies": {},
   "keywords": [],
   "author": "",
   "license": "ISC"

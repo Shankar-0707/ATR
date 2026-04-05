@@ -13,9 +13,9 @@ import {
 
 function PlanBadge({ plan }: { plan: string }) {
   const cfg: Record<string, string> = {
-    pro:   "text-indigo-300 border-indigo-500/40 bg-indigo-500/10",
+    pro:   "text-zinc-300 border-zinc-700 bg-zinc-900",
     free:  "text-gray-400 border-gray-600/40 bg-gray-500/10",
-    admin: "text-purple-300 border-purple-500/40 bg-purple-500/10",
+    admin: "text-zinc-300 border-zinc-700 bg-zinc-900",
   };
   return (
     <span className={`text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 rounded border ${cfg[plan] ?? cfg.free}`}>
@@ -35,7 +35,7 @@ function StatusDot({ status }: { status: string }) {
   const c = cfg[status] ?? cfg.pending;
   return (
     <span className="flex items-center gap-1.5 text-xs text-gray-400">
-      <span className={`w-1.5 h-1.5 rounded-full ${c.color}`} />
+      <span className={`w-1.5 h-1.5 rounded-md ${c.color}`} />
       {c.label}
     </span>
   );
@@ -86,7 +86,7 @@ export function Admin() {
       {/* Stat cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {/* Active infra */}
-        <div className="bg-[#161b22] border border-white/5 rounded-2xl p-5">
+        <div className="bg-[#000000] border border-zinc-800 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <p className="text-[10px] uppercase tracking-widest text-gray-500">Active Infrastructure</p>
             <Users size={18} className="text-gray-600" />
@@ -98,7 +98,7 @@ export function Admin() {
         </div>
 
         {/* Total executions */}
-        <div className="bg-[#161b22] border border-white/5 rounded-2xl p-5">
+        <div className="bg-[#000000] border border-zinc-800 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <p className="text-[10px] uppercase tracking-widest text-gray-500">Total Executions</p>
             <Rocket size={18} className="text-gray-600" />
@@ -108,7 +108,7 @@ export function Admin() {
         </div>
 
         {/* Status distribution */}
-        <div className="bg-[#161b22] border border-white/5 rounded-2xl p-5">
+        <div className="bg-[#000000] border border-zinc-800 rounded-2xl p-5">
           <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-4">Status Distribution</p>
           <div className="space-y-2">
             {[
@@ -119,7 +119,7 @@ export function Admin() {
             ].map(({ key, label, color }) => (
               <div key={key} className="flex items-center justify-between text-xs">
                 <span className="flex items-center gap-2 text-gray-400">
-                  <span className={`w-1.5 h-1.5 rounded-full ${
+                  <span className={`w-1.5 h-1.5 rounded-md ${
                     key === "completed" ? "bg-emerald-500" :
                     key === "active" ? "bg-blue-500" :
                     key === "pending" ? "bg-gray-500" : "bg-red-500"
@@ -138,11 +138,11 @@ export function Admin() {
       </div>
 
       {/* Upgrade Requests */}
-      <div className="bg-[#161b22] border border-white/5 rounded-2xl mb-6 overflow-hidden">
-        <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+      <div className="bg-[#000000] border border-zinc-800 rounded-2xl mb-6 overflow-hidden">
+        <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-white flex items-center gap-2">
-              <ArrowUpCircle size={18} className="text-indigo-400" />
+              <ArrowUpCircle size={18} className="text-zinc-400" />
               Upgrade Requests
             </h2>
             <p className="text-xs text-gray-500 mt-0.5">Review and approve user plan upgrades</p>
@@ -150,7 +150,7 @@ export function Admin() {
           <select
             value={upgradeStatus}
             onChange={e => setUpgradeStatus(e.target.value)}
-            className="bg-[#0d1117] border border-white/8 rounded-lg px-2 py-1 text-xs text-gray-400 focus:outline-none focus:border-indigo-500/50"
+            className="bg-black border border-zinc-800 rounded-md px-2 py-1 text-xs text-gray-400 focus:outline-none focus:border-zinc-600"
           >
             <option value="">All</option>
             <option value="pending">Pending</option>
@@ -168,7 +168,7 @@ export function Admin() {
             {upgradeRequests.data?.items.map((req) => (
               <div key={req.id} className="px-6 py-4 flex items-center justify-between hover:bg-white/2 transition-colors">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
+                  <div className="w-10 h-10 rounded-md bg-zinc-800 border border-zinc-700 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
                     {req.user?.email[0].toUpperCase()}
                   </div>
                   <div>
@@ -182,7 +182,7 @@ export function Admin() {
                 <div className="flex items-center gap-2">
                   {req.status === "pending" ? (
                     req.razorpay_order_id ? (
-                      <span className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-semibold">
+                      <span className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-zinc-900 border border-zinc-700 text-zinc-400 text-xs font-semibold">
                         <Zap size={13} className="animate-pulse" /> Awaiting Payment
                       </span>
                     ) : (
@@ -190,14 +190,14 @@ export function Admin() {
                         <button
                           onClick={() => reviewMutation.mutate({ id: req.id, approve: true })}
                           disabled={reviewMutation.isPending}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/30 text-emerald-300 text-xs font-semibold transition-all disabled:opacity-50"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/30 text-emerald-300 text-xs font-semibold transition-all disabled:opacity-50"
                         >
                           <Check size={13} /> Approve
                         </button>
                         <button
                           onClick={() => reviewMutation.mutate({ id: req.id, approve: false })}
                           disabled={reviewMutation.isPending}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/40 border border-red-500/30 text-red-300 text-xs font-semibold transition-all disabled:opacity-50"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-600/20 hover:bg-red-600/40 border border-red-500/30 text-red-300 text-xs font-semibold transition-all disabled:opacity-50"
                         >
                           <X size={13} /> Reject
                         </button>
@@ -205,7 +205,7 @@ export function Admin() {
                     )
                   ) : (
                     <div className="flex flex-col items-end gap-1">
-                      <span className={`text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full border ${
+                      <span className={`text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-md border ${
                         req.status === "approved"
                           ? "text-emerald-400 border-emerald-500/40 bg-emerald-500/10"
                           : "text-red-400 border-red-500/40 bg-red-500/10"
@@ -225,8 +225,8 @@ export function Admin() {
       </div>
 
       {/* Users table */}
-      <div className="bg-[#161b22] border border-white/5 rounded-2xl mb-6 overflow-hidden">
-        <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+      <div className="bg-[#000000] border border-zinc-800 rounded-2xl mb-6 overflow-hidden">
+        <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-white">Platform Users</h2>
             <p className="text-xs text-gray-500 mt-0.5">Manage and monitor accounts</p>
@@ -236,7 +236,7 @@ export function Admin() {
 
         <table className="w-full">
           <thead>
-            <tr className="border-b border-white/5">
+            <tr className="border-b border-zinc-800">
               {["User Email", "Subscription Plan", "Job Count", "Join Date", "Actions"].map(h => (
                 <th key={h} className="px-6 py-3 text-left text-[10px] uppercase tracking-widest text-gray-600 font-semibold">{h}</th>
               ))}
@@ -248,10 +248,10 @@ export function Admin() {
                 <tr key={i}><td colSpan={5} className="px-6 py-4"><div className="h-5 rounded shimmer" /></td></tr>
               ))
             ) : users.data?.items.map((u) => (
-              <tr key={u.id} className="border-b border-white/5 hover:bg-white/2 transition-colors">
+              <tr key={u.id} className="border-b border-zinc-800 hover:bg-white/2 transition-colors">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                    <div className="w-8 h-8 rounded-md bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
                       {u.email[0].toUpperCase()}
                     </div>
                     <span className="text-sm text-gray-300">{u.email}</span>
@@ -261,14 +261,14 @@ export function Admin() {
                 <td className="px-6 py-4 text-sm text-gray-400">{u._count.jobs}</td>
                 <td className="px-6 py-4 text-xs text-gray-600">{new Date(u.created_at).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })}</td>
                 <td className="px-6 py-4">
-                  <button className="text-xs text-gray-600 hover:text-indigo-400 transition-colors">View</button>
+                  <button className="text-xs text-gray-600 hover:text-zinc-400 transition-colors">View</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        <div className="px-6 py-3 border-t border-white/5 flex items-center justify-between text-xs text-gray-600">
+        <div className="px-6 py-3 border-t border-zinc-800 flex items-center justify-between text-xs text-gray-600">
           <span>Showing {users.data?.items.length ?? 0} of {users.data?.total ?? 0} users</span>
           <div className="flex items-center gap-2">
             <button onClick={() => setUserPage(p => Math.max(0, p - 1))} disabled={userPage === 0}
@@ -276,7 +276,7 @@ export function Admin() {
               <ChevronLeft size={14} />
             </button>
             <button onClick={() => setUserPage(p => p + 1)} disabled={!users.data || (userPage + 1) * PAGE >= users.data.total}
-              className="px-3 py-1 rounded bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/40 disabled:opacity-30 transition-all">
+              className="px-3 py-1 rounded bg-zinc-800/50 text-zinc-400 hover:bg-white text-black hover:bg-zinc-200/40 disabled:opacity-30 transition-all">
               Next
             </button>
           </div>
@@ -284,22 +284,22 @@ export function Admin() {
       </div>
 
       {/* Jobs table */}
-      <div className="bg-[#161b22] border border-white/5 rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+      <div className="bg-[#000000] border border-zinc-800 rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-white">Global Job Logs</h2>
             <p className="text-xs text-gray-500 mt-0.5">Real-time oversight of all AI processes</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-[10px] text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 rounded-full px-2.5 py-1 uppercase tracking-widest font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 pulse-dot" />
+            <span className="flex items-center gap-1.5 text-[10px] text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 rounded-md px-2.5 py-1 uppercase tracking-widest font-bold">
+              <span className="w-1.5 h-1.5 rounded-md bg-emerald-500 pulse-dot" />
               All Systems Nominal
             </span>
-            <span className="text-[10px] text-gray-600 border border-white/8 rounded-full px-2.5 py-1">Latency: 14ms</span>
+            <span className="text-[10px] text-gray-600 border border-zinc-800 rounded-md px-2.5 py-1">Latency: 14ms</span>
             <select
               value={jobStatus}
               onChange={e => { setJobStatus(e.target.value); setJobPage(0); }}
-              className="bg-[#0d1117] border border-white/8 rounded-lg px-2 py-1 text-xs text-gray-400 focus:outline-none focus:border-indigo-500/50"
+              className="bg-black border border-zinc-800 rounded-md px-2 py-1 text-xs text-gray-400 focus:outline-none focus:border-zinc-600"
             >
               <option value="">All statuses</option>
               {["pending","active","completed","failed","dead"].map(s => (
@@ -311,7 +311,7 @@ export function Admin() {
 
         <table className="w-full">
           <thead>
-            <tr className="border-b border-white/5">
+            <tr className="border-b border-zinc-800">
               {["Job Type", "Status", "User Email", "Timestamp", "Console"].map(h => (
                 <th key={h} className="px-6 py-3 text-left text-[10px] uppercase tracking-widest text-gray-600 font-semibold">{h}</th>
               ))}
@@ -326,7 +326,7 @@ export function Admin() {
               const typeLabel: Record<string, string> = { summarise: "Summarisation", generate: "Image Generation", translate: "Translation", transcribe: "Transcription" };
               const ago = Math.round((Date.now() - new Date(j.created_at).getTime()) / 60000);
               return (
-                <tr key={j.id} className="border-b border-white/5 hover:bg-white/2 transition-colors">
+                <tr key={j.id} className="border-b border-zinc-800 hover:bg-white/2 transition-colors">
                   <td className="px-6 py-4">
                     <p className="text-sm font-medium text-gray-200">{typeLabel[j.type] ?? j.type}</p>
                     <p className="text-[10px] text-gray-600 font-mono mt-0.5">ID: {j.id.slice(0, 10).toUpperCase()}</p>
@@ -335,7 +335,7 @@ export function Admin() {
                   <td className="px-6 py-4 text-xs text-gray-500">{j.user.email}</td>
                   <td className="px-6 py-4 text-xs text-gray-600">{ago}m ago</td>
                   <td className="px-6 py-4">
-                    <button className="p-1.5 rounded-lg border border-white/8 hover:border-indigo-500/30 hover:bg-indigo-500/10 text-gray-600 hover:text-indigo-400 transition-all">
+                    <button className="p-1.5 rounded-md border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900 text-gray-600 hover:text-zinc-400 transition-all">
                       <Terminal size={13} />
                     </button>
                   </td>
@@ -345,15 +345,15 @@ export function Admin() {
           </tbody>
         </table>
 
-        <div className="px-6 py-3 border-t border-white/5 flex items-center justify-between text-xs text-gray-600">
+        <div className="px-6 py-3 border-t border-zinc-800 flex items-center justify-between text-xs text-gray-600">
           <span>Showing {jobs.data?.items.length ?? 0} of {jobs.data?.total ?? 0} total jobs</span>
           <div className="flex items-center gap-2">
             <button onClick={() => setJobPage(p => Math.max(0, p - 1))} disabled={jobPage === 0}
-              className="px-3 py-1 rounded border border-white/8 hover:bg-white/5 disabled:opacity-30 transition-all">
+              className="px-3 py-1 rounded border border-zinc-800 hover:bg-white/5 disabled:opacity-30 transition-all">
               Prev
             </button>
             <button onClick={() => setJobPage(p => p + 1)} disabled={!jobs.data || (jobPage + 1) * PAGE >= jobs.data.total}
-              className="px-3 py-1 rounded bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/40 disabled:opacity-30 transition-all">
+              className="px-3 py-1 rounded bg-zinc-800/50 text-zinc-400 hover:bg-white text-black hover:bg-zinc-200/40 disabled:opacity-30 transition-all">
               Next
             </button>
           </div>

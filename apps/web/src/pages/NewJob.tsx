@@ -77,7 +77,7 @@ export function NewJob() {
       <div className="flex gap-6">
         {/* Left: tab list */}
         <div className="w-56 flex-shrink-0">
-          <div className="bg-[#161b22] border border-white/5 rounded-2xl p-2 flex flex-col gap-1">
+          <div className="bg-[#000000] border border-zinc-800 rounded-2xl p-2 flex flex-col gap-1">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const locked = tab.id === "generate" && isGenerateLocked;
@@ -87,8 +87,8 @@ export function NewJob() {
                   key={tab.id}
                   type="button"
                   onClick={() => { if (!locked) setKind(tab.id); }}
-                  className={`w-full flex items-center justify-between px-3 py-3 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer
-                    ${active ? "bg-indigo-600/20 text-indigo-300 border border-indigo-500/30" : "text-gray-400 hover:text-gray-200 hover:bg-white/5"}
+                  className={`w-full flex items-center justify-between px-3 py-3 rounded-md text-sm font-medium transition-all duration-150 cursor-pointer
+                    ${active ? "bg-zinc-800/50 text-zinc-300 border border-zinc-700" : "text-gray-400 hover:text-gray-200 hover:bg-white/5"}
                     ${locked ? "opacity-50 cursor-not-allowed" : ""}
                   `}
                 >
@@ -97,7 +97,7 @@ export function NewJob() {
                     {tab.label}
                   </span>
                   {locked && <Lock size={12} className="text-gray-600" />}
-                  {active && !locked && <ChevronRight size={13} className="text-indigo-400" />}
+                  {active && !locked && <ChevronRight size={13} className="text-zinc-400" />}
                 </button>
               );
             })}
@@ -105,13 +105,13 @@ export function NewJob() {
 
           {/* Usage */}
           {usage.data && (
-            <div className="mt-4 bg-[#161b22] border border-white/5 rounded-xl p-4">
+            <div className="mt-4 bg-[#000000] border border-zinc-800 rounded-md p-4">
               <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">
                 Usage: {usage.data.jobsCreatedToday} / {usage.data.dailyJobLimit} jobs
               </p>
-              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div className="h-1.5 rounded-md bg-white/10 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
+                  className="h-full rounded-md bg-white transition-all duration-500"
                   style={{ width: `${Math.min(100, (usage.data.jobsCreatedToday / usage.data.dailyJobLimit) * 100)}%` }}
                 />
               </div>
@@ -122,20 +122,20 @@ export function NewJob() {
         {/* Right: form panel */}
         <div className="flex-1">
           {kind === "generate" && isGenerateLocked ? (
-            <div className="bg-[#161b22] border border-white/5 rounded-2xl p-10 flex flex-col items-center justify-center text-center min-h-80">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center mb-4">
-                <Image size={28} className="text-indigo-400/50" />
+            <div className="bg-[#000000] border border-zinc-800 rounded-2xl p-10 flex flex-col items-center justify-center text-center min-h-80">
+              <div className="w-16 h-16 rounded-2xl bg-white text-black hover:bg-zinc-900 border border-white/10 flex items-center justify-center mb-4">
+                <Image size={28} className="text-zinc-400/50" />
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">Visual AI Locked</h3>
               <p className="text-sm text-gray-500 mb-6 max-w-xs">
                 Upgrade to Pro to access high-fidelity image generation.
               </p>
-              <button className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all">
+              <button className="px-6 py-2.5 rounded-md bg-white text-black hover:bg-zinc-200 text-sm font-semibold transition-all">
                 Upgrade to Pro
               </button>
             </div>
           ) : (
-            <form onSubmit={onSubmit} className="bg-[#161b22] border border-white/5 rounded-2xl p-6">
+            <form onSubmit={onSubmit} className="bg-[#000000] border border-zinc-800 rounded-2xl p-6">
               {/* Panel header */}
               <div className="flex items-center justify-between mb-6">
                 <div>
@@ -148,10 +148,10 @@ export function NewJob() {
               {kind === "summarise" && (
                 <>
                   {/* Sub-tabs */}
-                  <div className="flex gap-1 mb-4 bg-[#0d1117] rounded-lg p-1 w-fit">
+                  <div className="flex gap-1 mb-4 bg-black rounded-md p-1 w-fit">
                     {(["text", "pdf"] as const).map(m => (
                       <button key={m} type="button" onClick={() => setSumMode(m)}
-                        className={`px-4 py-1.5 rounded-md text-xs font-semibold uppercase tracking-widest transition-all ${sumMode === m ? "bg-indigo-600 text-white" : "text-gray-500 hover:text-gray-300"}`}>
+                        className={`px-4 py-1.5 rounded-md text-xs font-semibold uppercase tracking-widest transition-all ${sumMode === m ? "bg-white text-black hover:bg-zinc-200" : "text-gray-500 hover:text-gray-300"}`}>
                         {m === "text" ? "Input Text" : "PDF Upload"}
                       </button>
                     ))}
@@ -166,16 +166,16 @@ export function NewJob() {
                         rows={9}
                         required
                         placeholder="Paste long-form content here..."
-                        className="w-full bg-[#0d1117] border border-white/8 rounded-xl px-4 py-3 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 resize-none transition-all"
+                        className="w-full bg-black border border-zinc-800 rounded-md px-4 py-3 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-zinc-600 focus:ring-1 focus:ring-white/20 resize-none transition-all"
                       />
                     </>
                   ) : (
                     <>
                       <div
                         onClick={() => pdfRef.current?.click()}
-                        className="border-2 border-dashed border-white/10 hover:border-indigo-500/40 rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer transition-all group"
+                        className="border-2 border-dashed border-zinc-800 hover:border-zinc-700 rounded-md p-10 flex flex-col items-center justify-center cursor-pointer transition-all group"
                       >
-                        <Upload size={28} className="text-gray-600 group-hover:text-indigo-400 mb-3 transition-colors" />
+                        <Upload size={28} className="text-gray-600 group-hover:text-zinc-400 mb-3 transition-colors" />
                         <p className="text-sm font-medium text-gray-400 group-hover:text-gray-200 transition-colors">
                           {sumFile ? sumFile.name : "Upload PDF Document"}
                         </p>
@@ -195,18 +195,18 @@ export function NewJob() {
                     <label className="text-[11px] uppercase tracking-widest text-gray-500 font-semibold mb-2 block">Text to Translate</label>
                     <textarea value={trText} onChange={e => setTrText(e.target.value)} rows={7} required
                       placeholder="Enter text to translate..."
-                      className="w-full bg-[#0d1117] border border-white/8 rounded-xl px-4 py-3 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-indigo-500/50 resize-none transition-all" />
+                      className="w-full bg-black border border-zinc-800 rounded-md px-4 py-3 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-zinc-600 resize-none transition-all" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-[11px] uppercase tracking-widest text-gray-500 font-semibold mb-2 block">Target Language</label>
                       <input value={targetLang} onChange={e => setTargetLang(e.target.value)} required placeholder="e.g. French, Spanish"
-                        className="w-full bg-[#0d1117] border border-white/8 rounded-xl px-4 py-2.5 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-indigo-500/50 transition-all" />
+                        className="w-full bg-black border border-zinc-800 rounded-md px-4 py-2.5 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-zinc-600 transition-all" />
                     </div>
                     <div>
                       <label className="text-[11px] uppercase tracking-widest text-gray-500 font-semibold mb-2 block">Source Language <span className="text-gray-700">(optional)</span></label>
                       <input value={sourceLang} onChange={e => setSourceLang(e.target.value)} placeholder="Auto-detect"
-                        className="w-full bg-[#0d1117] border border-white/8 rounded-xl px-4 py-2.5 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-indigo-500/50 transition-all" />
+                        className="w-full bg-black border border-zinc-800 rounded-md px-4 py-2.5 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-zinc-600 transition-all" />
                     </div>
                   </div>
                 </div>
@@ -219,14 +219,14 @@ export function NewJob() {
                     <label className="text-[11px] uppercase tracking-widest text-gray-500 font-semibold mb-2 block">Image Prompt</label>
                     <textarea value={prompt} onChange={e => setPrompt(e.target.value)} rows={6} required maxLength={4000}
                       placeholder="Describe the image you want to generate..."
-                      className="w-full bg-[#0d1117] border border-white/8 rounded-xl px-4 py-3 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-indigo-500/50 resize-none transition-all" />
+                      className="w-full bg-black border border-zinc-800 rounded-md px-4 py-3 text-sm text-gray-300 placeholder-gray-700 focus:outline-none focus:border-zinc-600 resize-none transition-all" />
                   </div>
                   <div>
                     <label className="text-[11px] uppercase tracking-widest text-gray-500 font-semibold mb-2 block">Size</label>
                     <div className="flex gap-2">
                       {(["1024x1024", "1792x1024", "1024x1792"] as jobsApi.ImageSize[]).map(s => (
                         <button key={s} type="button" onClick={() => setImageSize(s)}
-                          className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-all ${imageSize === s ? "border-indigo-500/50 bg-indigo-600/20 text-indigo-300" : "border-white/8 text-gray-500 hover:text-gray-300 hover:border-white/20"}`}>
+                          className={`flex-1 py-2 rounded-md text-xs font-semibold border transition-all ${imageSize === s ? "border-zinc-600 bg-zinc-800/50 text-zinc-300" : "border-white/8 text-gray-500 hover:text-gray-300 hover:border-white/20"}`}>
                           {s === "1024x1024" ? "Square" : s === "1792x1024" ? "Landscape" : "Portrait"}
                         </button>
                       ))}
@@ -239,9 +239,9 @@ export function NewJob() {
               {kind === "transcribe" && (
                 <div
                   onClick={() => audioRef.current?.click()}
-                  className="border-2 border-dashed border-white/10 hover:border-indigo-500/40 rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer transition-all group"
+                  className="border-2 border-dashed border-zinc-800 hover:border-zinc-700 rounded-md p-10 flex flex-col items-center justify-center cursor-pointer transition-all group"
                 >
-                  <Upload size={28} className="text-gray-600 group-hover:text-indigo-400 mb-3 transition-colors" />
+                  <Upload size={28} className="text-gray-600 group-hover:text-zinc-400 mb-3 transition-colors" />
                   <p className="text-sm font-medium text-gray-400 group-hover:text-gray-200 transition-colors">
                     {audioFile ? audioFile.name : "Upload Audio File"}
                   </p>
@@ -252,7 +252,7 @@ export function NewJob() {
               )}
 
               {err && (
-                <div className="mt-4 flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                <div className="mt-4 flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-md px-3 py-2">
                   <AlertCircle size={13} />
                   {err}
                 </div>
@@ -261,16 +261,16 @@ export function NewJob() {
               <button
                 type="submit"
                 disabled={busy}
-                className="mt-5 w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-semibold text-sm transition-all duration-150 shadow-lg shadow-indigo-500/20"
+                className="mt-5 w-full flex items-center justify-center gap-2 py-3 rounded-md bg-white text-black hover:bg-zinc-200 disabled:opacity-60 font-semibold text-sm transition-all duration-150 "
               >
                 {busy ? (
                   <span className="flex gap-1">
                     {[0,1,2].map(i => (
-                      <span key={i} className="w-1.5 h-1.5 rounded-full bg-white pulse-dot" style={{ animationDelay: `${i*0.15}s` }} />
+                      <span key={i} className="w-1.5 h-1.5 rounded-md bg-white pulse-dot" style={{ animationDelay: `${i*0.15}s` }} />
                     ))}
                   </span>
                 ) : (
-                  <><Sparkles size={15} /> Submit Job</>
+                  <> Submit Job</>
                 )}
               </button>
             </form>

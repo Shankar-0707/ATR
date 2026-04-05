@@ -39,12 +39,12 @@ function Protected({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0d1117]">
+      <div className="flex items-center justify-center h-screen bg-black">
         <div className="flex gap-1">
           {[0, 1, 2].map((i) => (
             <span
               key={i}
-              className="w-2 h-2 rounded-full bg-indigo-500 pulse-dot"
+              className="w-2 h-2 rounded-md bg-white text-black hover:bg-zinc-200 pulse-dot"
               style={{ animationDelay: `${i * 0.2}s` }}
             />
           ))}
@@ -71,9 +71,9 @@ function NavItem({
   return (
     <button
       onClick={() => nav(to)}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer
+      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150 cursor-pointer
         ${active
-          ? "bg-indigo-600/20 text-indigo-300 border border-indigo-500/30"
+          ? "bg-zinc-800/50 text-zinc-300 border border-zinc-700"
           : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
         }`}
     >
@@ -98,17 +98,17 @@ function Sidebar() {
     : 0;
 
   return (
-    <aside className="fixed top-0 left-0 h-screen w-52 bg-[#0d1117] border-r border-white/5 flex flex-col z-40">
+    <aside className="fixed top-0 left-0 h-screen w-52 bg-black border-r border-zinc-800 flex flex-col z-40">
       {/* Brand */}
-      <div className="px-4 pt-6 pb-4 border-b border-white/5">
+      <div className="px-4 pt-6 pb-4 border-b border-zinc-800">
         <div className="flex items-center gap-2 mb-1">
-          <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-md bg-white text-black hover:bg-zinc-200 flex items-center justify-center">
             <Zap size={14} className="text-white" />
           </div>
           <span className="font-bold text-white text-sm tracking-wide">Task Runner</span>
         </div>
         {user && (
-          <span className="text-[10px] uppercase tracking-widest text-indigo-400 font-semibold ml-9">
+          <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold ml-9">
             {user.plan} plan
           </span>
         )}
@@ -125,13 +125,13 @@ function Sidebar() {
 
       {/* Usage bar */}
       {usage.data && (
-        <div className="px-4 py-3 border-t border-white/5">
+        <div className="px-4 py-3 border-t border-zinc-800">
           <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">
             Usage: {usage.data.jobsCreatedToday} / {usage.data.dailyJobLimit} jobs
           </p>
-          <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+          <div className="h-1.5 rounded-md bg-white/10 overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
+              className="h-full rounded-md bg-white transition-all duration-500"
               style={{ width: `${pct}%` }}
             />
           </div>
@@ -171,7 +171,7 @@ function Sidebar() {
                       email: user?.email,
                     },
                     theme: {
-                      color: "#4f46e5", // indigo-600
+                      color: "#ffffff", // indigo-600
                     },
                   };
 
@@ -182,7 +182,7 @@ function Sidebar() {
                   showToast("error", e.message || "Failed to initiate upgrade");
                 }
               }}
-              className="mt-3 w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors"
+              className="mt-3 w-full py-1.5 rounded-md bg-white text-black hover:bg-zinc-200 text-xs font-semibold transition-colors"
             >
               Upgrade to Pro
             </button>
@@ -191,13 +191,13 @@ function Sidebar() {
       )}
 
       {/* Bottom */}
-      <div className="px-3 py-3 border-t border-white/5 flex flex-col gap-1">
+      <div className="px-3 py-3 border-t border-zinc-800 flex flex-col gap-1">
         {/* <NavItem to="/settings" icon={Settings} label="Settings" active={false} /> */}
         {/* <NavItem to="/support" icon={HelpCircle} label="Support" active={false} /> */}
         {user && (
           <button
             onClick={() => logout.mutate()}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all duration-150 cursor-pointer"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all duration-150 cursor-pointer"
           >
             <LogOut size={16} />
             Log out
@@ -225,7 +225,7 @@ function Topbar() {
   const title = crumbs[location.pathname] ?? "Orchestrator Console";
 
   return (
-    <header className="fixed top-0 left-52 right-0 h-14 bg-[#0d1117]/80 backdrop-blur border-b border-white/5 flex items-center justify-between px-6 z-30">
+    <header className="fixed top-0 left-52 right-0 h-14 bg-black/80 backdrop-blur border-b border-zinc-800 flex items-center justify-between px-6 z-30">
       <span className="text-sm font-semibold text-gray-200">{title}</span>
       <div className="flex items-center gap-4">
         {usage.data && (
@@ -235,15 +235,15 @@ function Topbar() {
         )}
         <button className="relative text-gray-400 hover:text-gray-200 transition-colors">
           <Bell size={18} />
-          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-indigo-500" />
+          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-md bg-white text-black hover:bg-zinc-200" />
         </button>
         {user && (
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white">
+            <div className="w-7 h-7 rounded-md bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold text-white">
               {user.email[0].toUpperCase()}
             </div>
             {user.plan !== "free" && (
-              <span className="text-[10px] uppercase tracking-widest font-bold text-indigo-400 border border-indigo-500/40 rounded px-1.5 py-0.5">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 border border-zinc-700 rounded px-1.5 py-0.5">
                 {user.plan}
               </span>
             )}
@@ -258,22 +258,33 @@ function Layout({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   if (!user) return <>{children}</>;
   return (
-    <div className="min-h-screen bg-[#0d1117]">
-      <Sidebar />
-      <Topbar />
-      <main className="ml-52 pt-14 min-h-screen">
-        {children}
-      </main>
-      <footer className="ml-52 border-t border-white/5 px-8 py-4 flex items-center justify-between text-[11px] text-gray-600">
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 pulse-dot" />
-            System Latency: 42ms
-          </span>
-          <span>End-to-end encrypted</span>
-        </div>
-        <span>© 2024 THE ORCHESTRATOR AI</span>
-      </footer>
+    <div className="min-h-screen bg-black relative top-0 left-0 w-full overflow-x-hidden">
+      {/* Fixed Wavy Corner Elements */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Top-Right Wave Pattern */}
+        <div className="absolute -top-[20vh] -right-[15vw] w-[60vw] h-[60vh] bg-gradient-to-br from-zinc-800/40 via-zinc-900/20 to-transparent rounded-[100%] blur-3xl transform rotate-12 opacity-60" />
+        
+        {/* Bottom-Left Wave Pattern */}
+        <div className="absolute -bottom-[20vh] -left-[10vw] w-[50vw] h-[50vh] bg-gradient-to-tr from-zinc-800/40 via-zinc-900/20 to-transparent rounded-[100%] blur-3xl transform -rotate-12 opacity-60" />
+      </div>
+
+      <div className="relative z-10 w-full h-full flex flex-col">
+        <Sidebar />
+        <Topbar />
+        <main className="ml-52 pt-14 min-h-screen relative z-10">
+          {children}
+        </main>
+        <footer className="ml-52 border-t border-zinc-800/60 bg-black/50 backdrop-blur-md px-8 py-4 flex items-center justify-between text-[11px] text-gray-600 relative z-10">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-md bg-emerald-500 pulse-dot" />
+              System Latency: 42ms
+            </span>
+            <span>End-to-end encrypted</span>
+          </div>
+          <span>© 2024 THE ORCHESTRATOR AI</span>
+        </footer>
+      </div>
     </div>
   );
 }
