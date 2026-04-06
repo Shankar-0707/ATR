@@ -1,3 +1,4 @@
+import { createRequire } from "node:module";
 import type { JobType, UserPlan } from "@ai-task-runner/shared";
 import type { Express } from "express";
 import { Prisma } from "@prisma/client";
@@ -14,6 +15,23 @@ import { destroyRaw, uploadRawAsset } from "./storage.service.js";
 import { aiTasksQueue, enqueueAiTask } from "./queue.service.js";
 
 const DEFAULT_QUEUE_NAME = "default";
+const require = createRequire(import.meta.url);
+const pdfParse = require("pdf-parse") as (
+  data: Buffer,
+) => Promise<{ text?: string }>;
+
+async function extractPdfText(buffer: Buffer): Promise<string> {
+  try {
+    const parsed = await pdfParse(buffer);
+    const text = parsed.text?.trim() ?? "";
+    if (!text) {
+      return "";
+    }
+    return text;
+  } catch {
+    return "";
+  }
+}
 
 async function getDefaultQueueId(userId: string): Promise<string> {
   const q = await prisma.queue.findFirst({
@@ -117,6 +135,14 @@ export async function createSummariseJobFromPdf(
   plan: UserPlan,
   file: Express.Multer.File,
 ) {
+  const text = await extractPdfText(file.buffer);
+  if (text) {
+    return createJob(userId, plan, "summarise", {
+      source: "text",
+      text,
+    });
+  }
+
   const uploaded = await uploadRawAsset(userId, file.buffer, file.originalname);
   try {
     return await createJob(userId, plan, "summarise", {
@@ -124,7 +150,7 @@ export async function createSummariseJobFromPdf(
       publicId: uploaded.publicId,
       secureUrl: uploaded.secureUrl,
       fileName: file.originalname,
-      mimeType: file.mimetype,
+      mimeType: file.mimetype || "application/pdf",
     });
   } catch (err) {
     await destroyRaw(uploaded.publicId).catch(() => {});

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   BrowserRouter,
   Navigate,
@@ -8,18 +8,19 @@ import {
   useNavigate,
 } from "react-router-dom";
 import {
+  Activity,
+  BarChart2,
+  Bell,
   LayoutDashboard,
+  LogOut,
   PlusCircle,
   ShieldCheck,
-  Settings,
-  HelpCircle,
-  LogOut,
-  Bell,
   Zap,
 } from "lucide-react";
-import { useAuth } from "./hooks/useAuth.js";
-import { useJobSocket } from "./hooks/useSocket.js";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "./hooks/useAuth.js";
+import { useJobsList } from "./hooks/useJobs.js";
+import { useJobSocket } from "./hooks/useSocket.js";
 import { fetchUsage } from "./api/usage.api.js";
 import { Login } from "./pages/Login.js";
 import { Register } from "./pages/Register.js";
@@ -39,12 +40,12 @@ function Protected({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-black">
+      <div className="flex h-screen items-center justify-center bg-black">
         <div className="flex gap-1">
           {[0, 1, 2].map((i) => (
             <span
               key={i}
-              className="w-2 h-2 rounded-md bg-white text-black hover:bg-zinc-200 pulse-dot"
+              className="h-2 w-2 rounded-full bg-white pulse-dot"
               style={{ animationDelay: `${i * 0.2}s` }}
             />
           ))}
@@ -61,24 +62,27 @@ function NavItem({
   icon: Icon,
   label,
   active,
+  compact = false,
 }: {
   to: string;
   icon: React.ElementType;
   label: string;
   active: boolean;
+  compact?: boolean;
 }) {
   const nav = useNavigate();
   return (
     <button
       onClick={() => nav(to)}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150 cursor-pointer
+      className={`w-full cursor-pointer rounded-md text-sm font-medium transition-all duration-150
+        ${compact ? "flex flex-col items-center justify-center gap-1 px-2 py-3 text-[11px]" : "flex items-center gap-3 px-3 py-2.5"}
         ${active
-          ? "bg-zinc-800/50 text-zinc-300 border border-zinc-700"
-          : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+          ? "border border-zinc-700 bg-zinc-800/50 text-zinc-300"
+          : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
         }`}
     >
       <Icon size={16} />
-      {label}
+      <span>{label}</span>
     </button>
   );
 }
@@ -98,24 +102,22 @@ function Sidebar() {
     : 0;
 
   return (
-    <aside className="fixed top-0 left-0 h-screen w-52 bg-black border-r border-zinc-800 flex flex-col z-40">
-      {/* Brand */}
-      <div className="px-4 pt-6 pb-4 border-b border-zinc-800">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-7 h-7 rounded-md bg-white text-black hover:bg-zinc-200 flex items-center justify-center">
-            <Zap size={14} className="text-white" />
+    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-52 flex-col border-r border-zinc-800 bg-black md:flex">
+      <div className="border-b border-zinc-800 px-4 pb-4 pt-6">
+        <div className="mb-1 flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-white text-black hover:bg-zinc-200">
+            <Zap size={14} className="text-black" />
           </div>
-          <span className="font-bold text-white text-sm tracking-wide">Task Runner</span>
+          <span className="text-sm font-bold tracking-wide text-white">Task Runner</span>
         </div>
         {user && (
-          <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold ml-9">
+          <span className="ml-9 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
             {user.plan} plan
           </span>
         )}
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
+      <nav className="flex flex-1 flex-col gap-1 px-3 py-4">
         <NavItem to="/" icon={LayoutDashboard} label="Dashboard" active={location.pathname === "/"} />
         <NavItem to="/jobs/new" icon={PlusCircle} label="New Job" active={location.pathname === "/jobs/new"} />
         {user?.plan === "admin" && (
@@ -123,13 +125,12 @@ function Sidebar() {
         )}
       </nav>
 
-      {/* Usage bar */}
       {usage.data && (
-        <div className="px-4 py-3 border-t border-zinc-800">
-          <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">
+        <div className="border-t border-zinc-800 px-4 py-3">
+          <p className="mb-2 text-[10px] uppercase tracking-widest text-gray-500">
             Usage: {usage.data.jobsCreatedToday} / {usage.data.dailyJobLimit} jobs
           </p>
-          <div className="h-1.5 rounded-md bg-white/10 overflow-hidden">
+          <div className="h-1.5 overflow-hidden rounded-md bg-white/10">
             <div
               className="h-full rounded-md bg-white transition-all duration-500"
               style={{ width: `${pct}%` }}
@@ -141,7 +142,9 @@ function Sidebar() {
                 try {
                   const { loadRazorpayScript } = await import("./utils/razorpay.js");
                   const isLoaded = await loadRazorpayScript();
-                  if (!isLoaded) throw new Error("Razorpay SDK failed to load. Check your internet connection.");
+                  if (!isLoaded) {
+                    throw new Error("Razorpay SDK failed to load. Check your internet connection.");
+                  }
 
                   const { createRazorpayOrder, verifyRazorpayPayment } = await import("./api/upgrade.api.js");
                   const { showToast } = await import("./components/Toast.js");
@@ -162,7 +165,7 @@ function Sidebar() {
                           razorpay_payment_id: response.razorpay_payment_id,
                           razorpay_signature: response.razorpay_signature,
                         });
-                        showToast("success", "Payment successful! Your plan has been upgraded to Pro. 🎉");
+                        showToast("success", "Payment successful! Your plan has been upgraded to Pro.");
                       } catch (err: any) {
                         showToast("error", err.message || "Payment verification failed.");
                       }
@@ -171,7 +174,7 @@ function Sidebar() {
                       email: user?.email,
                     },
                     theme: {
-                      color: "#ffffff", // indigo-600
+                      color: "#ffffff",
                     },
                   };
 
@@ -182,7 +185,7 @@ function Sidebar() {
                   showToast("error", e.message || "Failed to initiate upgrade");
                 }
               }}
-              className="mt-3 w-full py-1.5 rounded-md bg-white text-black hover:bg-zinc-200 text-xs font-semibold transition-colors"
+              className="mt-3 w-full rounded-md bg-white py-1.5 text-xs font-semibold text-black transition-colors hover:bg-zinc-200"
             >
               Upgrade to Pro
             </button>
@@ -190,14 +193,11 @@ function Sidebar() {
         </div>
       )}
 
-      {/* Bottom */}
-      <div className="px-3 py-3 border-t border-zinc-800 flex flex-col gap-1">
-        {/* <NavItem to="/settings" icon={Settings} label="Settings" active={false} /> */}
-        {/* <NavItem to="/support" icon={HelpCircle} label="Support" active={false} /> */}
+      <div className="flex flex-col gap-1 border-t border-zinc-800 px-3 py-3">
         {user && (
           <button
             onClick={() => logout.mutate()}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all duration-150 cursor-pointer"
+            className="flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-gray-500 transition-all duration-150 hover:bg-red-500/10 hover:text-red-400"
           >
             <LogOut size={16} />
             Log out
@@ -209,13 +209,18 @@ function Sidebar() {
 }
 
 function Topbar() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const usage = useQuery({
     queryKey: ["usage"],
     queryFn: fetchUsage,
     enabled: Boolean(user),
   });
+  const { data: jobsResp } = useJobsList();
+
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   const crumbs: Record<string, string> = {
     "/": "User Console",
@@ -224,28 +229,162 @@ function Topbar() {
   };
   const title = crumbs[location.pathname] ?? "Orchestrator Console";
 
+  const notifications = jobsResp?.items
+    ? jobsResp.items.filter((j) => j.status === "completed" || j.status === "failed").slice(0, 5)
+    : [];
+
   return (
-    <header className="fixed top-0 left-52 right-0 h-14 bg-black/80 backdrop-blur border-b border-zinc-800 flex items-center justify-between px-6 z-30">
-      <span className="text-sm font-semibold text-gray-200">{title}</span>
-      <div className="flex items-center gap-4">
+    <header className="fixed left-0 right-0 top-0 z-30 flex h-16 items-center justify-between border-b border-zinc-800 bg-black/85 px-4 backdrop-blur md:left-52 md:h-14 md:px-6">
+      <div className="min-w-0">
+        <span className="block truncate text-sm font-semibold text-gray-200">{title}</span>
+        {user && (
+          <span className="text-[10px] uppercase tracking-[0.22em] text-gray-600 md:hidden">
+            {user.plan} plan
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-center gap-3 md:gap-4">
         {usage.data && (
-          <span className="text-xs text-gray-400">
+          <span className="hidden text-xs text-gray-400 lg:inline">
             Usage: {usage.data.jobsCreatedToday} / {usage.data.dailyJobLimit} jobs
           </span>
         )}
-        <button className="relative text-gray-400 hover:text-gray-200 transition-colors">
-          <Bell size={18} />
-          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-md bg-white text-black hover:bg-zinc-200" />
-        </button>
+
+        <div className="relative">
+          <button
+            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+            className="relative text-gray-400 transition-colors hover:text-gray-200 focus:outline-none"
+          >
+            <Bell size={18} />
+            {notifications.length > 0 && (
+              <span className="pulse-dot absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-white" />
+            )}
+          </button>
+
+          {isNotificationsOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setIsNotificationsOpen(false)} />
+              <div className="absolute right-0 top-10 z-50 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-zinc-800 bg-[#0a0a0a] py-2 shadow-xl">
+                <div className="flex items-center justify-between border-b border-zinc-800/50 px-4 py-2.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-white">Notifications</span>
+                  {notifications.length > 0 && (
+                    <span className="rounded bg-zinc-800 px-1.5 text-[10px] text-gray-400">
+                      {notifications.length} New
+                    </span>
+                  )}
+                </div>
+                <div className="max-h-[min(55vh,300px)] overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="flex items-center justify-center px-4 py-8 text-xs text-gray-500">
+                      No recent notifications
+                    </div>
+                  ) : (
+                    notifications.map((job) => (
+                      <button
+                        key={job.id}
+                        onClick={() => {
+                          setIsNotificationsOpen(false);
+                          navigate(`/jobs/${job.id}`);
+                        }}
+                        className="flex w-full flex-col gap-1 border-b border-zinc-800/50 px-4 py-3 text-left transition-colors hover:bg-zinc-800/30"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-medium capitalize text-gray-200">{job.type} Job</span>
+                          <span
+                            className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                              job.status === "completed"
+                                ? "bg-emerald-500/10 text-emerald-400"
+                                : "bg-red-500/10 text-red-500"
+                            }`}
+                          >
+                            {job.status}
+                          </span>
+                        </div>
+                        <span className="line-clamp-2 text-xs text-gray-500">
+                          {job.status === "completed"
+                            ? "Your task has finished successfully. Tap to view the result."
+                            : "Your task experienced an error."}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                  {user?.plan === "free" &&
+                    usage.data &&
+                    usage.data.jobsCreatedToday >= usage.data.dailyJobLimit && (
+                      <div className="border-t border-red-500/20 bg-red-500/10 px-4 py-3 text-xs text-red-400">
+                        <strong>System Alert:</strong> You have reached your daily job limit ({usage.data.dailyJobLimit}).
+                      </div>
+                    )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
         {user && (
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold text-white">
-              {user.email[0].toUpperCase()}
-            </div>
-            {user.plan !== "free" && (
-              <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 border border-zinc-700 rounded px-1.5 py-0.5">
-                {user.plan}
-              </span>
+          <div className="relative">
+            <button
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className="flex items-center gap-2 transition-opacity hover:opacity-80 focus:outline-none"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-xs font-bold text-white">
+                {user.email[0].toUpperCase()}
+              </div>
+              {user.plan !== "free" && (
+                <span className="hidden rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-emerald-400 sm:inline">
+                  {user.plan}
+                </span>
+              )}
+            </button>
+
+            {isProfileOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)} />
+                <div className="absolute right-0 top-12 z-50 w-[min(16rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-zinc-800 bg-[#0a0a0a] py-2 shadow-xl">
+                  <div className="border-b border-zinc-800/50 px-4 py-3">
+                    <p className="break-all text-sm font-medium text-white">{user.email}</p>
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      {user.plan} plan
+                    </p>
+                  </div>
+
+                  {usage.data && (
+                    <div className="flex flex-col gap-2.5 border-b border-zinc-800/50 px-4 py-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-2 text-gray-400">
+                          <Activity size={14} /> Jobs Today
+                        </span>
+                        <span className="font-medium text-gray-200">{usage.data.jobsCreatedToday}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-2 text-gray-400">
+                          <BarChart2 size={14} /> Daily Limit
+                        </span>
+                        <span className="font-medium text-gray-200">{usage.data.dailyJobLimit}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="px-2 pt-2">
+                    <button
+                      onClick={() => setIsProfileOpen(false)}
+                      className="w-full rounded-md px-3 py-2 text-left text-sm text-gray-300 transition-colors hover:bg-zinc-800/50 hover:text-white"
+                    >
+                      Close Menu
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        logout.mutate();
+                      }}
+                      className="mt-1 w-full rounded-md px-3 py-2 text-left text-sm text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200"
+                    >
+                      Log out
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         )}
@@ -254,36 +393,71 @@ function Topbar() {
   );
 }
 
+function MobileBottomNav() {
+  const { user } = useAuth();
+  const location = useLocation();
+
+  if (!user) return null;
+
+  return (
+    <nav className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-zinc-800/80 bg-black/90 p-2 shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur md:hidden">
+      <div className={`grid gap-2 ${user.plan === "admin" ? "grid-cols-3" : "grid-cols-2"}`}>
+        <NavItem
+          to="/"
+          icon={LayoutDashboard}
+          label="Dashboard"
+          active={location.pathname === "/"}
+          compact
+        />
+        <NavItem
+          to="/jobs/new"
+          icon={PlusCircle}
+          label="New Job"
+          active={location.pathname === "/jobs/new"}
+          compact
+        />
+        {user.plan === "admin" && (
+          <NavItem
+            to="/admin"
+            icon={ShieldCheck}
+            label="Admin"
+            active={location.pathname === "/admin"}
+            compact
+          />
+        )}
+      </div>
+    </nav>
+  );
+}
+
 function Layout({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   if (!user) return <>{children}</>;
+
   return (
-    <div className="min-h-screen bg-black relative top-0 left-0 w-full overflow-x-hidden">
-      {/* Fixed Wavy Corner Elements */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Top-Right Wave Pattern */}
-        <div className="absolute -top-[20vh] -right-[15vw] w-[60vw] h-[60vh] bg-gradient-to-br from-zinc-800/40 via-zinc-900/20 to-transparent rounded-[100%] blur-3xl transform rotate-12 opacity-60" />
-        
-        {/* Bottom-Left Wave Pattern */}
-        <div className="absolute -bottom-[20vh] -left-[10vw] w-[50vw] h-[50vh] bg-gradient-to-tr from-zinc-800/40 via-zinc-900/20 to-transparent rounded-[100%] blur-3xl transform -rotate-12 opacity-60" />
+    <div className="relative left-0 top-0 min-h-screen w-full overflow-x-hidden bg-black">
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div className="absolute -right-[15vw] -top-[20vh] h-[60vh] w-[60vw] rotate-12 rounded-[100%] bg-gradient-to-br from-zinc-800/40 via-zinc-900/20 to-transparent opacity-60 blur-3xl" />
+        <div className="absolute -bottom-[20vh] -left-[10vw] h-[50vh] w-[50vw] -rotate-12 rounded-[100%] bg-gradient-to-tr from-zinc-800/40 via-zinc-900/20 to-transparent opacity-60 blur-3xl" />
       </div>
 
-      <div className="relative z-10 w-full h-full flex flex-col">
+      <div className="relative z-10 flex h-full w-full flex-col">
         <Sidebar />
         <Topbar />
-        <main className="ml-52 pt-14 min-h-screen relative z-10">
+        <main className="relative z-10 min-h-screen pb-24 pt-16 md:ml-52 md:pb-0 md:pt-14">
           {children}
         </main>
-        <footer className="ml-52 border-t border-zinc-800/60 bg-black/50 backdrop-blur-md px-8 py-4 flex items-center justify-between text-[11px] text-gray-600 relative z-10">
+        <footer className="relative z-10 hidden items-center justify-between border-t border-zinc-800/60 bg-black/50 px-8 py-4 text-[11px] text-gray-600 backdrop-blur-md md:ml-52 md:flex">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-md bg-emerald-500 pulse-dot" />
+              <span className="pulse-dot h-1.5 w-1.5 rounded-md bg-emerald-500" />
               System Latency: 42ms
             </span>
             <span>End-to-end encrypted</span>
           </div>
-          <span>© 2024 THE ORCHESTRATOR AI</span>
+          <span>(c) 2024 THE ORCHESTRATOR AI</span>
         </footer>
+        <MobileBottomNav />
       </div>
     </div>
   );

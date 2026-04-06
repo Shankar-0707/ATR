@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
-import { Navigate, useNavigate, Link } from "react-router-dom";
-import { Mail, Lock, ArrowRight, Zap } from "lucide-react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { ArrowRight, Lock, Mail } from "lucide-react";
 import { useAuth } from "../hooks/useAuth.js";
 import { WavyBackground } from "@/components/ui/wavy-background.js";
 
@@ -20,114 +20,102 @@ export function Login() {
       { email, password },
       {
         onSuccess: () => nav("/", { replace: true }),
-        onError: (e: unknown) =>
-          setErr(e instanceof Error ? e.message : "Request failed"),
+        onError: (e: unknown) => setErr(e instanceof Error ? e.message : "Request failed"),
       },
     );
   }
 
   return (
-   <WavyBackground>
-     <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4">
-      {/* Brand */}
-      <div className="flex flex-col items-center mb-8 slide-in">
-        
-        <h1 className="text-2xl font-bold text-white tracking-tight">Task Runner</h1>
-      </div>
-
-      {/* Card */}
-      <div className="w-full max-w-md bg-[#000000] border border-zinc-800 rounded-2xl p-7 slide-in shadow-2xl">
-        <h2 className="text-lg font-semibold text-white mb-1">Welcome back</h2>
-        <p className="text-sm text-gray-500 mb-6">Enter your credentials to access.</p>
-
-        <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          <div>
-            <label className="text-[11px] uppercase tracking-widest text-gray-500 font-semibold mb-1.5 block">Email</label>
-            <div className="relative">
-              <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="name@company.com"
-                className="w-full bg-black border border-zinc-800 rounded-md pl-9 pr-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all"
-              />
-            </div>
+    <WavyBackground>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-black px-4 py-10 sm:px-6">
+        <div className="mb-8 flex max-w-md flex-col items-center text-center slide-in">
+          <div className="mb-4 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-zinc-400">
+            AI Workflow Studio
           </div>
+          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Task Runner</h1>
+          <p className="mt-3 text-sm leading-6 text-gray-500">
+            Smooth job orchestration on every screen, with a calmer mobile-first sign-in flow.
+          </p>
+        </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[11px] uppercase tracking-widest text-gray-500 font-semibold">Password</label>
-              {/* <button type="button" className="text-[11px] text-zinc-400 hover:text-zinc-300 font-semibold uppercase tracking-widest">Forgot?</button> */}
+        <div className="w-full max-w-md rounded-3xl border border-zinc-800 bg-[#000000]/90 p-5 shadow-2xl slide-in sm:p-7">
+          <h2 className="mb-1 text-lg font-semibold text-white">Welcome back</h2>
+          <p className="mb-6 text-sm text-gray-500">Enter your credentials to access.</p>
+
+          <form onSubmit={onSubmit} className="flex flex-col gap-4">
+            <div>
+              <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-gray-500">
+                Email
+              </label>
+              <div className="relative">
+                <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="name@company.com"
+                  className="w-full rounded-xl border border-zinc-800 bg-black py-3 pl-9 pr-3 text-sm text-gray-200 placeholder-gray-600 transition-all focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
+                />
+              </div>
             </div>
-            <div className="relative">
-              <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="••••••••"
-                className="w-full bg-black border border-zinc-800 rounded-md pl-9 pr-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all"
-              />
+
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
+                  Password
+                </label>
+              </div>
+              <div className="relative">
+                <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="********"
+                  className="w-full rounded-xl border border-zinc-800 bg-black py-3 pl-9 pr-3 text-sm text-gray-200 placeholder-gray-600 transition-all focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
+                />
+              </div>
             </div>
-          </div>
 
-          {err && (
-            <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-md px-3 py-2">
-              {err}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={login.isPending}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-md bg-white text-black hover:bg-zinc-200 disabled:opacity-60 font-semibold text-sm transition-all duration-150 mt-1"
-          >
-            {login.isPending ? (
-              <span className="flex gap-1">
-                {[0,1,2].map(i => (
-                  <span key={i} className="w-1.5 h-1.5 rounded-md bg-white pulse-dot" style={{ animationDelay: `${i*0.15}s` }} />
-                ))}
-              </span>
-            ) : (
-              <>Login <ArrowRight size={15} /></>
+            {err && (
+              <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-400">
+                {err}
+              </p>
             )}
-          </button>
 
-          {/* <div className="relative flex items-center gap-3 my-1">
-            <div className="flex-1 h-px bg-white/8" />
-            <span className="text-[11px] text-gray-600 uppercase tracking-widest">or continue with</span>
-            <div className="flex-1 h-px bg-white/8" />
-          </div> */}
+            <button
+              type="submit"
+              disabled={login.isPending}
+              className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-semibold text-black transition-all duration-150 hover:bg-zinc-200 disabled:opacity-60"
+            >
+              {login.isPending ? (
+                <span className="flex items-center justify-center gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <span
+                      key={i}
+                      className="h-1.5 w-1.5 rounded-full bg-black pulse-dot"
+                      style={{ animationDelay: `${i * 0.15}s` }}
+                    />
+                  ))}
+                </span>
+              ) : (
+                <>
+                  Login <ArrowRight size={15} />
+                </>
+              )}
+            </button>
+          </form>
+        </div>
 
-          {/* <div className="grid grid-cols-2 gap-3">
-            {["SSO", "API Key"].map((label) => (
-              <button
-                key={label}
-                type="button"
-                className="py-2 rounded-md bg-white/5 hover:bg-white/10 border border-zinc-800 text-sm text-gray-400 font-medium transition-all"
-              >
-                {label}
-              </button>
-            ))}
-          </div> */}
-        </form>
+        <p className="mt-5 text-center text-sm text-gray-600">
+          Don't have an account?{" "}
+          <Link to="/register" className="font-medium text-zinc-400 hover:text-zinc-300">
+            Create an account
+          </Link>
+        </p>
       </div>
-
-      <p className="mt-5 text-sm text-gray-600">
-        Don't have an account?{" "}
-        <Link to="/register" className="text-zinc-400 hover:text-zinc-300 font-medium">
-          Create an account
-        </Link>
-      </p>
-{/* 
-      <button className="fixed bottom-5 right-5 text-xs text-gray-600 hover:text-gray-400 flex items-center gap-1 transition-colors">
-        <span className="w-4 h-4 rounded-md border border-gray-700 flex items-center justify-center text-[10px]">?</span>
-        Support
-      </button> */}
-    </div>
-   </WavyBackground>
+    </WavyBackground>
   );
 }
