@@ -6,6 +6,13 @@
   }
   body {
     @apply bg-black text-zinc-100 font-sans antialiased;
+    min-width: 320px;
+  }
+  html, body, #root {
+    min-height: 100%;
+  }
+  button, input, textarea, select {
+    font: inherit;
   }
   ::-webkit-scrollbar {
     width: 6px;

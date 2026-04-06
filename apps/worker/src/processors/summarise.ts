@@ -99,6 +99,33 @@ async function summariseLongText(
   );
 }
 
+async function summarisePdfWithGemini(buf: Buffer): Promise<string> {
+  const ai = getGemini();
+  const res = await ai.models.generateContent({
+    model: env.GEMINI_MODEL,
+    contents: [
+      {
+        inlineData: {
+          mimeType: "application/pdf",
+          data: buf.toString("base64"),
+        },
+      },
+      "Summarize this PDF in well-structured Markdown. Use headings and bullets where helpful. Be faithful to the document and do not invent facts.",
+    ],
+    config: {
+      systemInstruction:
+        "You are a precise assistant. Output clear Markdown. Be faithful to the source; do not invent facts.",
+      temperature: 0.3,
+      maxOutputTokens: 8192,
+    },
+  });
+  const out = res.text?.trim();
+  if (!out) {
+    throw new Error("Gemini returned empty summary");
+  }
+  return out;
+}
+
 export async function processSummariseJob(input: {
   dbJobId: string;
   userId: string;
@@ -118,7 +145,8 @@ export async function processSummariseJob(input: {
 
   await report(5);
 
-  let text: string;
+  let text = "";
+  let summaryFromPdf: string | null = null;
   let source: "text" | "cloudinary";
 
   if (parsed.source === "text") {
@@ -127,18 +155,30 @@ export async function processSummariseJob(input: {
   } else {
     await report(15);
     const buf = await fetchBinaryFromCloudinaryUrl(parsed.secureUrl);
-    const parsedPdf = await pdfParse(buf);
-    text = parsedPdf.text ?? "";
     source = "cloudinary";
+    try {
+      const parsedPdf = await pdfParse(buf);
+      text = parsedPdf.text?.trim() ?? "";
+    } catch {
+      text = "";
+    }
+    if (!text) {
+      await report(35);
+      summaryFromPdf = await summarisePdfWithGemini(buf);
+    }
   }
 
-  if (!text.trim()) {
+  if (!text.trim() && !summaryFromPdf) {
     throw new Error("No extractable text (empty document or unreadable PDF)");
   }
 
-  await report(35);
-
-  const summary = await summariseLongText(text, report);
+  let summary: string;
+  if (summaryFromPdf) {
+    summary = summaryFromPdf;
+  } else {
+    await report(35);
+    summary = await summariseLongText(text, report);
+  }
 
   await report(95);
 

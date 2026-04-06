@@ -42,7 +42,7 @@ function JobCard({ job }: { job: JobRow }) {
   return (
     <div
       onClick={() => nav(`/jobs/${job.id}`)}
-      className="group flex items-center gap-4 bg-[#000000] hover:bg-[#1c2230] border border-zinc-800 hover:border-white/20 rounded-md px-5 py-4 cursor-pointer transition-all duration-200 slide-in"
+      className="group flex cursor-pointer flex-col gap-4 rounded-2xl border border-zinc-800 bg-[#000000] px-4 py-4 transition-all duration-200 slide-in hover:border-white/20 hover:bg-[#1c2230] sm:flex-row sm:items-center sm:px-5"
     >
       <div className={`w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0 ${
         job.status === "dead" ? "bg-rose-900/30" :
@@ -54,8 +54,8 @@ function JobCard({ job }: { job: JobRow }) {
         <Icon size={18} className={s.color} />
       </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
+      <div className="min-w-0 flex-1">
+        <div className="mb-1 flex flex-wrap items-center gap-2">
           <span className="text-sm font-semibold text-gray-200 truncate">
             {typeLabel[job.type] ?? job.type}
           </span>
@@ -70,7 +70,7 @@ function JobCard({ job }: { job: JobRow }) {
             {s.label}
           </span>
         </div>
-        <div className="flex items-center gap-3 text-xs text-gray-600">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
           <span className="flex items-center gap-1">
             <Clock size={10} />
             {new Date(job.created_at).toLocaleString()}
@@ -93,7 +93,7 @@ function JobCard({ job }: { job: JobRow }) {
         </div>
       </div>
 
-      <button className="text-gray-600 group-hover:text-gray-300 transition-colors flex items-center gap-1 text-xs font-medium flex-shrink-0">
+      <button className="flex items-center gap-1 self-start text-xs font-medium text-gray-600 transition-colors group-hover:text-gray-300 sm:self-center">
         View Details <ChevronRight size={14} />
       </button>
     </div>
@@ -125,16 +125,16 @@ export function Dashboard() {
   }, {});
 
   return (
-    <div className="px-8 py-8 max-w-5xl">
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       {/* Header */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Job Execution History</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Job Execution History</h1>
           <p className="text-gray-500 text-sm mt-1">Monitor and manage your active AI Works.</p>
         </div>
         <button
           onClick={() => nav("/jobs/new")}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-md bg-white text-black hover:bg-zinc-200 text-sm font-semibold transition-all duration-150 "
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition-all duration-150 hover:bg-zinc-200 sm:w-auto sm:rounded-md sm:py-2.5"
         >
           <Zap size={15} />
           Execute New Job
@@ -143,7 +143,7 @@ export function Dashboard() {
 
       {/* Usage pill */}
       {usage.data && (
-        <div className="inline-flex items-center gap-2 bg-[#000000] border border-zinc-800 rounded-md px-4 py-1.5 text-xs text-gray-400 mb-6">
+        <div className="mb-6 inline-flex max-w-full items-center gap-2 rounded-full border border-zinc-800 bg-[#000000] px-4 py-2 text-xs text-gray-400">
           <span className="w-2 h-2 rounded-md bg-emerald-500 pulse-dot" />
           Usage: {usage.data.jobsCreatedToday} / {usage.data.dailyJobLimit} jobs today
         </div>
@@ -156,7 +156,7 @@ export function Dashboard() {
             <div key={i} className="h-20 rounded-md shimmer" />
           ))
         ) : items.length === 0 ? (
-          <div className="text-center py-16 text-gray-600">
+          <div className="rounded-2xl border border-dashed border-zinc-800 py-14 text-center text-gray-600">
             <Zap size={32} className="mx-auto mb-3 opacity-30" />
             <p className="text-sm">No jobs yet. Execute your first AI task.</p>
           </div>
@@ -166,8 +166,8 @@ export function Dashboard() {
       </div>
 
       {/* Bottom stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-[#000000] border border-zinc-800 rounded-md p-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="rounded-2xl border border-zinc-800 bg-[#000000] p-5 sm:p-6">
           <p className="text-[11px] uppercase tracking-widest text-gray-500 mb-2">AI Processing Power</p>
           <p className="text-4xl font-bold text-white">
             94.8 <span className="text-lg font-normal text-gray-500">Teraflops</span>
@@ -175,13 +175,13 @@ export function Dashboard() {
           <p className="text-xs text-gray-500 mt-2 mb-4">
             Your dedicated GPU instances are running at peak efficiency.
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <span className="text-[10px] uppercase tracking-widest font-bold text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 rounded px-2 py-1">Optimized</span>
             <span className="text-[10px] uppercase tracking-widest font-bold text-blue-400 border border-blue-500/30 bg-blue-500/10 rounded px-2 py-1">Scaling Active</span>
           </div>
         </div>
 
-        <div className="bg-[#000000] border border-zinc-800 rounded-md p-6">
+        <div className="rounded-2xl border border-zinc-800 bg-[#000000] p-5 sm:p-6">
           <p className="text-[11px] uppercase tracking-widest text-gray-500 mb-2">Total Jobs</p>
           <p className="text-4xl font-bold text-white">{total.toLocaleString()}</p>
           <p className="text-xs text-emerald-400 flex items-center gap-1 mt-1 mb-4">

@@ -22,6 +22,8 @@ Sentry.init({
 
 const connection = new Redis(env.REDIS_URL, {
   maxRetriesPerRequest: null,
+  family: 4,
+  keepAlive: 10000,
 });
 
 import http from "node:http";

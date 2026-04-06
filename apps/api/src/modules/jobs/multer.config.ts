@@ -22,7 +22,7 @@ export const pdfUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: PDF_MAX_BYTES, files: 1 },
   fileFilter(_req, file, cb) {
-    if (file.mimetype !== "application/pdf") {
+    if (!file.originalname.toLowerCase().endsWith(".pdf") && file.mimetype !== "application/pdf") {
       cb(new Error("Only application/pdf is allowed"));
       return;
     }

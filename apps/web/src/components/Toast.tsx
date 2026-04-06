@@ -50,5 +50,5 @@ export function showToast(type: ToastType, message?: any) {
 }
 
 export function ToastContainer() {
-  return <HotToaster position="top-right" />;
+  return <HotToaster position="top-right" containerStyle={{ zIndex: 99999, top: 60 }} />;
 }
