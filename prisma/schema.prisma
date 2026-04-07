@@ -70,6 +70,7 @@ model Job {
   type         String // summarise | transcribe | generate | translate
   payload      Json
   status       String @default("pending") // pending | active | completed | failed | dead
+  is_deleted   Boolean   @default(false)
   priority     Int       @default(1)
   attempts     Int       @default(0)
   max_attempts Int       @default(3)

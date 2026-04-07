@@ -184,11 +184,12 @@ export async function createTranscribeJobFromAudio(
 async function pruneStaleJobs(userId: string) {
   const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
   await prisma.job.updateMany({
-    where: {
-      user_id: userId,
-      status: "pending",
-      created_at: { lt: tenMinutesAgo },
-    },
+      where: {
+        user_id: userId,
+        status: "pending",
+        is_deleted: false,
+        created_at: { lt: tenMinutesAgo },
+      },
     data: {
       status: "failed",
       error: "Job timed out in pending state (exceeded 10 minutes)",
@@ -205,12 +206,12 @@ export async function listJobs(userId: string, take = 20, skip = 0) {
 
   const [items, total] = await Promise.all([
     prisma.job.findMany({
-      where: { user_id: userId },
+      where: { user_id: userId, is_deleted: false },
       orderBy: { created_at: "desc" },
       take: Math.min(take, 100),
       skip,
     }),
-    prisma.job.count({ where: { user_id: userId } }),
+    prisma.job.count({ where: { user_id: userId, is_deleted: false } }),
   ]);
   return { items, total, take, skip };
 }
@@ -234,9 +235,12 @@ export async function removeJob(userId: string, jobId: string) {
     throw new ApiError(404, "Job not found");
   }
 
-  // If already finished, delete the record.
+  // If already finished, mark as deleted (Soft Delete).
   if (["completed", "failed", "dead"].includes(job.status)) {
-    await prisma.job.delete({ where: { id: job.id } });
+    await prisma.job.update({
+      where: { id: job.id },
+      data: { is_deleted: true },
+    });
     return { ok: true, action: "deleted" };
   }
 
@@ -250,6 +254,7 @@ export async function removeJob(userId: string, jobId: string) {
     where: { id: job.id },
     data: {
       status: "failed",
+      is_deleted: true,
       error: "Cancelled by user",
       completed_at: new Date(),
     },
