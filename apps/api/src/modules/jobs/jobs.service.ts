@@ -178,7 +178,31 @@ export async function createTranscribeJobFromAudio(
   }
 }
 
+/**
+ * Automatically marks jobs that have been stuck in 'pending' for too long as failed.
+ */
+async function pruneStaleJobs(userId: string) {
+  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+  await prisma.job.updateMany({
+    where: {
+      user_id: userId,
+      status: "pending",
+      created_at: { lt: tenMinutesAgo },
+    },
+    data: {
+      status: "failed",
+      error: "Job timed out in pending state (exceeded 10 minutes)",
+      completed_at: new Date(),
+    },
+  });
+}
+
 export async function listJobs(userId: string, take = 20, skip = 0) {
+  // Auto-cleanup stale jobs whenever the user views their list.
+  await pruneStaleJobs(userId).catch(err => {
+    console.error("Failed to prune stale jobs:", err);
+  });
+
   const [items, total] = await Promise.all([
     prisma.job.findMany({
       where: { user_id: userId },
@@ -201,20 +225,27 @@ export async function getJob(userId: string, jobId: string) {
   return job;
 }
 
-export async function cancelJob(userId: string, jobId: string) {
+export async function removeJob(userId: string, jobId: string) {
   const job = await prisma.job.findFirst({
     where: { id: jobId, user_id: userId },
   });
+
   if (!job) {
     throw new ApiError(404, "Job not found");
   }
-  if (job.status !== "pending") {
-    throw new ApiError(400, "Only pending jobs can be cancelled");
+
+  // If already finished, delete the record.
+  if (["completed", "failed", "dead"].includes(job.status)) {
+    await prisma.job.delete({ where: { id: job.id } });
+    return { ok: true, action: "deleted" };
   }
+
+  // If in progress, cancel it.
   if (job.bull_job_id) {
     const bullJob = await aiTasksQueue.getJob(job.bull_job_id);
-    await bullJob?.remove();
+    await bullJob?.remove().catch(() => {});
   }
+
   await prisma.job.update({
     where: { id: job.id },
     data: {
@@ -223,7 +254,8 @@ export async function cancelJob(userId: string, jobId: string) {
       completed_at: new Date(),
     },
   });
-  return { ok: true };
+
+  return { ok: true, action: "cancelled" };
 }
 
 export async function retryJob(userId: string, jobId: string) {

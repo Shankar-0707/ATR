@@ -27,6 +27,7 @@ Sentry.init({
 });
 
 const app = express();
+app.set("trust proxy", 1);
 app.use(
   cors({
     origin: env.CORS_ORIGIN === undefined ? true : env.CORS_ORIGIN,
