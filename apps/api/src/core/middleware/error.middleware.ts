@@ -92,10 +92,18 @@ export function errorMiddleware(
     return;
   }
   Sentry.captureException(err, { extra: meta });
+  const errorMessage = err instanceof Error ? err.message : String(err);
+  const errorStack = err instanceof Error ? err.stack : undefined;
+
   logger.error("Unhandled request error", {
     ...meta,
-    error: err instanceof Error ? err.message : String(err),
-    stack: err instanceof Error ? err.stack : undefined,
+    error: errorMessage,
+    stack: errorStack,
   });
-  res.status(500).json({ error: "Internal server error" });
+
+  res.status(500).json({
+    error: "Internal server error",
+    message: errorMessage,
+    stack: env.NODE_ENV === "production" ? errorStack : undefined,
+  });
 }
