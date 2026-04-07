@@ -8,9 +8,9 @@
     "packages/*"
   ],
   "scripts": {
-    "postinstall": "npm run build -w @ai-task-runner/shared && node scripts/link-api-express.mjs",
+    "postinstall": "npm run build -w @ai-task-runner/shared && npx prisma generate && node scripts/link-api-express.mjs",
     "dev": "npm run dev --workspaces --if-present",
-    "build": "npm run build -w @ai-task-runner/shared && npm run build --workspaces --if-present",
+    "build": "npx prisma generate && npm run build -w @ai-task-runner/shared && npm run build --workspaces --if-present",
     "start": "npm run start --workspaces --if-present",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
