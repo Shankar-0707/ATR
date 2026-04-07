@@ -41,6 +41,12 @@ export function retryJob(id: string) {
   return apiJson<JobRow>(`/api/jobs/${id}/retry`, { method: "POST" });
 }
 
+export function removeJob(id: string) {
+  return apiJson<{ ok: boolean; action: string }>(`/api/jobs/${id}`, {
+    method: "DELETE",
+  });
+}
+
 export function createSummariseText(text: string) {
   return apiJson<JobRow>("/api/jobs", {
     method: "POST",

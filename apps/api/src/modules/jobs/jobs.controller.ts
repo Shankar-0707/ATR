@@ -2,13 +2,13 @@ import type { Request, Response } from "express";
 import type { UserPlan } from "@ai-task-runner/shared";
 import { createJobBodySchema } from "./jobs.schemas.js";
 import {
-  cancelJob,
-  createJob,
   createSummariseJobFromPdf,
   createTranscribeJobFromAudio,
   getJob,
   listJobs,
+  removeJob,
   retryJob,
+  createJob,
 } from "./jobs.service.js";
 
 function plan(req: Request): UserPlan {
@@ -62,7 +62,7 @@ export async function getOne(req: Request, res: Response): Promise<void> {
 }
 
 export async function remove(req: Request, res: Response): Promise<void> {
-  const result = await cancelJob(req.user!.id, req.params.id);
+  const result = await removeJob(req.user!.id, req.params.id);
   res.json(result);
 }
 

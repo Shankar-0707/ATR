@@ -1,14 +1,14 @@
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   FileText, Image, Languages, Mic, Zap, TrendingUp,
   ChevronRight, Clock, AlertCircle, CheckCircle2, Loader2,
-   Skull,
+  Skull, RotateCcw, Trash2, X,
 } from "lucide-react";
 import { useJobsList } from "../hooks/useJobs.js";
 import { fetchUsage } from "../api/usage.api.js";
 import { useAuth } from "../hooks/useAuth.js";
-import type { JobRow } from "../api/jobs.api.js";
+import { type JobRow, retryJob, removeJob } from "../api/jobs.api.js";
 
 const JOB_ICONS: Record<string, React.ElementType> = {
   summarise: FileText,
@@ -27,9 +27,20 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string;
 
 function JobCard({ job }: { job: JobRow }) {
   const nav = useNavigate();
+  const qc = useQueryClient();
+
+  const retry = useMutation({
+    mutationFn: () => retryJob(job.id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["jobs"] }),
+  });
+
+  const remove = useMutation({
+    mutationFn: () => removeJob(job.id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["jobs"] }),
+  });
+
   const Icon = JOB_ICONS[job.type] ?? FileText;
   const s = STATUS_CONFIG[job.status] ?? STATUS_CONFIG.pending;
-  const StatusIcon = s.icon;
   const isActive = job.status === "active";
 
   const typeLabel: Record<string, string> = {
@@ -78,7 +89,7 @@ function JobCard({ job }: { job: JobRow }) {
           {job.error && (
             <span className="text-red-500 truncate max-w-xs flex items-center gap-1">
               <AlertCircle size={10} />
-              Failed
+              {job.error.includes("exceeded 10 minutes") ? "Stuck/Timed out" : "Failed"}
             </span>
           )}
           {job.status === "active" && (
@@ -93,22 +104,58 @@ function JobCard({ job }: { job: JobRow }) {
         </div>
       </div>
 
-      <button className="flex items-center gap-1 self-start text-xs font-medium text-gray-600 transition-colors group-hover:text-gray-300 sm:self-center">
-        View Details <ChevronRight size={14} />
-      </button>
+      <div className="flex items-center gap-3 self-start sm:self-center">
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2">
+          {(job.status === "failed" || job.status === "dead") && (
+            <button
+              onClick={(e) => { e.stopPropagation(); retry.mutate(); }}
+              disabled={retry.isPending}
+              className="p-2 transition-colors rounded-lg text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-50"
+              title="Retry job"
+            >
+              {retry.isPending ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />}
+            </button>
+          )}
+
+          {(job.status === "pending" || job.status === "active") && (
+            <button
+              onClick={(e) => { e.stopPropagation(); remove.mutate(); }}
+              disabled={remove.isPending}
+              className="p-2 transition-colors rounded-lg text-orange-500 bg-orange-500/10 hover:bg-orange-500/20 disabled:opacity-50"
+              title="Cancel job"
+            >
+              {remove.isPending ? <Loader2 size={16} className="animate-spin" /> : <X size={16} />}
+            </button>
+          )}
+
+          {(job.status === "completed" || job.status === "failed" || job.status === "dead") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm("Delete this job record permanently?")) remove.mutate();
+              }}
+              disabled={remove.isPending}
+              className="p-2 transition-colors rounded-lg text-gray-500 bg-white/5 hover:bg-red-500/20 hover:text-red-500 disabled:opacity-50"
+              title="Delete job"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
+        </div>
+
+        <button
+          onClick={(e) => { e.stopPropagation(); nav(`/jobs/${job.id}`); }}
+          className="flex items-center gap-1 text-xs font-medium text-gray-500 transition-colors hover:text-gray-200"
+        >
+          View Details <ChevronRight size={14} />
+        </button>
+      </div>
     </div>
   );
 }
 
-function StatCard({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color?: string }) {
-  return (
-    <div className="bg-[#000000] border border-zinc-800 rounded-md p-5">
-      <p className="text-[11px] uppercase tracking-widest text-gray-500 mb-3">{label}</p>
-      <p className={`text-3xl font-bold ${color ?? "text-white"}`}>{value}</p>
-      {sub && <p className="text-xs text-gray-500 mt-1">{sub}</p>}
-    </div>
-  );
-}
+
 
 export function Dashboard() {
   const nav = useNavigate();
@@ -119,10 +166,7 @@ export function Dashboard() {
   const items = q.data?.items ?? [];
   const total = q.data?.total ?? 0;
 
-  const statusCounts = items.reduce<Record<string, number>>((acc, j) => {
-    acc[j.status] = (acc[j.status] ?? 0) + 1;
-    return acc;
-  }, {});
+
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
