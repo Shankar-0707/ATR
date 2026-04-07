@@ -24,6 +24,7 @@ const connection = new Redis(env.REDIS_URL, {
   maxRetriesPerRequest: null,
   family: 4,
   keepAlive: 10000,
+  ...(env.REDIS_URL.startsWith("rediss://") ? { tls: { rejectUnauthorized: false } } : {}),
 });
 
 import http from "node:http";
