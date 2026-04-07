@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response } from "express";
 import multer from "multer";
 import { ZodError } from "zod";
 import { logger } from "../lib/logger.js";
-import { env } from "node:process";
+import { env } from "../../config/env.js";
 
 export class ApiError extends Error {
   constructor(
@@ -93,18 +93,26 @@ export function errorMiddleware(
     return;
   }
   Sentry.captureException(err, { extra: meta });
-  const errorMessage = err instanceof Error ? err.message : String(err);
+  // Handle non-Error objects (like those often returned by Cloudinary or specific DB drivers)
+  const errorMessage =
+    err instanceof Error
+      ? err.message
+      : typeof err === "object"
+        ? JSON.stringify(err)
+        : String(err);
   const errorStack = err instanceof Error ? err.stack : undefined;
 
   logger.error("Unhandled request error", {
     ...meta,
     error: errorMessage,
+    errorRaw: err instanceof Error ? undefined : err, // Log raw object if not Error
     stack: errorStack,
   });
 
   res.status(500).json({
     error: "Internal server error",
     message: errorMessage,
+    details: err instanceof Error ? undefined : err,
     stack: env.NODE_ENV === "production" ? errorStack : undefined,
   });
 }
