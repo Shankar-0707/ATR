@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from "express";
 import multer from "multer";
 import { ZodError } from "zod";
 import { logger } from "../lib/logger.js";
+import { env } from "node:process";
 
 export class ApiError extends Error {
   constructor(
