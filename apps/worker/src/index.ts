@@ -83,6 +83,18 @@ new Worker<AiTaskJobData>(
   async (job) => {
     const { dbJobId, userId, type, payload } = job.data;
 
+    // Simulate delay for pending jobs using the worker env configuration
+    if (env.BULL_JOB_DELAY_MS > 0) {
+      await new Promise(resolve => setTimeout(resolve, env.BULL_JOB_DELAY_MS));
+      
+      // Check if job was cancelled during the delay
+      const currentJob = await prisma.job.findUnique({ where: { id: dbJobId } });
+      if (currentJob && ["failed", "dead", "completed"].includes(currentJob.status)) {
+        logger.info("Job aborted because status changed during delay", { jobId: dbJobId, status: currentJob.status });
+        return; // Abort silently, user cancelled it or it was modified
+      }
+    }
+
     await prisma.job.update({
       where: { id: dbJobId },
       data: {

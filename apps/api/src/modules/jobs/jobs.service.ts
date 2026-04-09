@@ -254,7 +254,7 @@ export async function removeJob(userId: string, jobId: string) {
     where: { id: job.id },
     data: {
       status: "failed",
-      is_deleted: true,
+      is_deleted: false, // keep it visible after cancellation
       error: "Cancelled by user",
       completed_at: new Date(),
     },
@@ -270,10 +270,11 @@ export async function retryJob(userId: string, jobId: string) {
   if (!job) {
     throw new ApiError(404, "Job not found");
   }
-  if (job.status !== "failed") {
+  // Allow restarting failed, dead, or completed jobs for production use
+  if (["pending", "active"].includes(job.status)) {
     throw new ApiError(
       400,
-      "Only failed jobs can be retried (dead jobs exhausted all attempts)",
+      "Cannot restart a job that is currently pending or active",
     );
   }
   const userRow = await prisma.user.findUniqueOrThrow({
