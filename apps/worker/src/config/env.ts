@@ -22,6 +22,7 @@ const schema = z.object({
   CLOUDINARY_API_KEY: z.string().min(1, "CLOUDINARY_API_KEY is required"),
   CLOUDINARY_API_SECRET: z.string().min(1, "CLOUDINARY_API_SECRET is required"),
   PORT: z.coerce.number().default(3001),
+  BULL_JOB_DELAY_MS: z.coerce.number().min(0).optional(),
 });
 
 const parsed = schema.parse(process.env);
@@ -32,6 +33,7 @@ const imageSizeParsed = imageSizes.safeParse(imageSizeRaw);
 
 export const env = {
   ...parsed,
+  BULL_JOB_DELAY_MS: parsed.BULL_JOB_DELAY_MS ?? (parsed.NODE_ENV === "production" ? 0 : 2000),
   GEMINI_MODEL: defaultModel,
   GEMINI_TRANSLATION_MODEL:
     parsed.GEMINI_TRANSLATION_MODEL?.trim() || defaultModel,

@@ -18,10 +18,10 @@ export const aiTasksQueue = new Queue<AiTaskJobData>(AI_TASKS_QUEUE_NAME, {
 });
 
 export async function enqueueAiTask(data: AiTaskJobData) {
-  const delayMs = Math.max(0, Math.floor(Number(env.bullJobDelayMs)));
+  // We no longer use BullMQ "delay" due to serverless Redis issues on Upstash.
+  // Delay is natively handled directly in the worker to hold in "pending".
   return aiTasksQueue.add("process", data, {
     jobId: data.dbJobId,
     priority: data.priority,
-    ...(delayMs > 0 ? { delay: delayMs } : {}),
   });
 }
