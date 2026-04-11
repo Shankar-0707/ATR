@@ -23,6 +23,7 @@ const schema = z.object({
   CLOUDINARY_API_SECRET: z.string().min(1, "CLOUDINARY_API_SECRET is required"),
   PORT: z.coerce.number().default(3001),
   BULL_JOB_DELAY_MS: z.coerce.number().min(0).optional(),
+  WORKER_PUBLIC_URL: z.string().url().optional(),
 });
 
 const parsed = schema.parse(process.env);
@@ -44,4 +45,5 @@ export const env = {
     : "1024x1024",
   GEMINI_TRANSCRIPTION_MODEL:
     parsed.GEMINI_TRANSCRIPTION_MODEL?.trim() || defaultModel,
+  WORKER_PUBLIC_URL: parsed.WORKER_PUBLIC_URL,
 };
