@@ -27,7 +27,7 @@ export function Register() {
 
   return (
     <WavyBackground>
-      <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12 sm:px-6 sm:py-20">
+      <div className="flex flex-col items-center justify-center px-4">
         <div className="mb-8 flex max-w-md flex-col items-center text-center slide-in">
           <img src="/logo.png" alt="TaskPilot Logo" className="mb-6 h-16 w-16 rounded-2xl object-contain shadow-2xl" />
          

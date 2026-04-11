@@ -18,9 +18,14 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, "../.env") });
 
-// ── ✏️  CHANGE THESE ──────────────────────────────────────────────────────────
-const ADMIN_EMAIL    = "piyushy221@gmail.com";
-const ADMIN_PASSWORD = "piyushy221";      // plain-text; will be hashed below
+// ── ✏️  CONFIGURATION ──────────────────────────────────────────────────────────
+const ADMIN_EMAIL    = process.env.SEED_ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD;
+
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  console.error("❌  Error: SEED_ADMIN_EMAIL or SEED_ADMIN_PASSWORD not set in .env");
+  process.exit(1);
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 const prisma = new PrismaClient();
