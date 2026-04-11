@@ -27,14 +27,13 @@ export function Register() {
 
   return (
     <WavyBackground>
-      <div className="flex min-h-screen flex-col items-center justify-center bg-black px-4 py-10 sm:px-6">
+      <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12 sm:px-6 sm:py-20">
         <div className="mb-8 flex max-w-md flex-col items-center text-center slide-in">
-          <div className="mb-4 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-zinc-400">
-            Launch Workspace
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Task Runner</h1>
-          <p className="mt-3 text-sm leading-6 text-gray-500">
-            Create your account and manage AI jobs from a polished desktop or mobile workspace.
+          <img src="/logo.png" alt="TaskPilot Logo" className="mb-6 h-16 w-16 rounded-2xl object-contain shadow-2xl" />
+         
+          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">TaskPilot</h1>
+          <p className="mx-auto mt-3 max-w-[280px] text-sm leading-6 text-gray-500 sm:max-w-md">
+            Create your account and manage AI jobs from Request to Execution
           </p>
         </div>
 

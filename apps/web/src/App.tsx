@@ -21,6 +21,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "./hooks/useAuth.js";
 import { useJobsList } from "./hooks/useJobs.js";
 import { useJobSocket } from "./hooks/useSocket.js";
+import { useUpgrade } from "./hooks/useUpgrade.js";
 import { fetchUsage } from "./api/usage.api.js";
 import { Login } from "./pages/Login.js";
 import { Register } from "./pages/Register.js";
@@ -89,6 +90,7 @@ function NavItem({
 
 function Sidebar() {
   const { user, logout } = useAuth();
+  const { handleUpgrade } = useUpgrade();
   const location = useLocation();
   const usage = useQuery({
     queryKey: ["usage"],
@@ -105,10 +107,8 @@ function Sidebar() {
     <aside className="fixed left-0 top-0 z-40 hidden h-screen w-52 flex-col border-r border-zinc-800 bg-black md:flex">
       <div className="border-b border-zinc-800 px-4 pb-4 pt-6">
         <div className="mb-1 flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-white text-black hover:bg-zinc-200">
-            <Zap size={14} className="text-black" />
-          </div>
-          <span className="text-sm font-bold tracking-wide text-white">Task Runner</span>
+          <img src="/logo.png" alt="TaskPilot" className="h-7 w-7 rounded-md object-contain" />
+          <span className="text-sm font-bold tracking-wide text-white">TaskPilot</span>
         </div>
         {user && (
           <span className="ml-9 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
@@ -138,53 +138,7 @@ function Sidebar() {
           </div>
           {user?.plan === "free" && (
             <button
-              onClick={async () => {
-                try {
-                  const { loadRazorpayScript } = await import("./utils/razorpay.js");
-                  const isLoaded = await loadRazorpayScript();
-                  if (!isLoaded) {
-                    throw new Error("Razorpay SDK failed to load. Check your internet connection.");
-                  }
-
-                  const { createRazorpayOrder, verifyRazorpayPayment } = await import("./api/upgrade.api.js");
-                  const { showToast } = await import("./components/Toast.js");
-
-                  const order = await createRazorpayOrder("pro");
-
-                  const options = {
-                    key: order.key_id,
-                    amount: order.amount,
-                    currency: order.currency,
-                    name: "The Orchestrator",
-                    description: "Upgrade to Pro Plan",
-                    order_id: order.orderId,
-                    handler: async (response: any) => {
-                      try {
-                        await verifyRazorpayPayment({
-                          razorpay_order_id: response.razorpay_order_id,
-                          razorpay_payment_id: response.razorpay_payment_id,
-                          razorpay_signature: response.razorpay_signature,
-                        });
-                        showToast("success", "Payment successful! Your plan has been upgraded to Pro.");
-                      } catch (err: any) {
-                        showToast("error", err.message || "Payment verification failed.");
-                      }
-                    },
-                    prefill: {
-                      email: user?.email,
-                    },
-                    theme: {
-                      color: "#ffffff",
-                    },
-                  };
-
-                  const rzp = new (window as any).Razorpay(options);
-                  rzp.open();
-                } catch (e: any) {
-                  const { showToast } = await import("./components/Toast.js");
-                  showToast("error", e.message || "Failed to initiate upgrade");
-                }
-              }}
+              onClick={handleUpgrade}
               className="mt-3 w-full rounded-md bg-white py-1.5 text-xs font-semibold text-black transition-colors hover:bg-zinc-200"
             >
               Upgrade to Pro
@@ -210,6 +164,7 @@ function Sidebar() {
 
 function Topbar() {
   const { user, logout } = useAuth();
+  const { handleUpgrade } = useUpgrade();
   const location = useLocation();
   const navigate = useNavigate();
   const usage = useQuery({
@@ -227,7 +182,7 @@ function Topbar() {
     "/jobs/new": "Create New Job",
     "/admin": "Admin Control",
   };
-  const title = crumbs[location.pathname] ?? "Orchestrator Console";
+  const title = crumbs[location.pathname] ?? "TaskPilot Console";
 
   const notifications = jobsResp?.items
     ? jobsResp.items.filter((j) => j.status === "completed" || j.status === "failed").slice(0, 5)
@@ -235,7 +190,8 @@ function Topbar() {
 
   return (
     <header className="fixed left-0 right-0 top-0 z-30 flex h-16 items-center justify-between border-b border-zinc-800 bg-black/85 px-4 backdrop-blur md:left-52 md:h-14 md:px-6">
-      <div className="min-w-0">
+      <div className="flex min-w-0 items-center gap-3">
+        <img src="/logo.png" alt="TaskPilot" className="h-6 w-6 object-contain md:hidden" />
         <span className="block truncate text-sm font-semibold text-gray-200">{title}</span>
         {user && (
           <span className="text-[10px] uppercase tracking-[0.22em] text-gray-600 md:hidden">
@@ -367,6 +323,18 @@ function Topbar() {
                   )}
 
                   <div className="px-2 pt-2">
+                    {user?.plan === "free" && (
+                      <button
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          handleUpgrade();
+                        }}
+                        className="mb-1 flex w-full items-center gap-2 rounded-md bg-white px-3 py-2 text-left text-sm font-semibold text-black transition-colors hover:bg-zinc-200"
+                      >
+                        <Zap size={14} fill="currentColor" />
+                        Upgrade to Pro
+                      </button>
+                    )}
                     <button
                       onClick={() => setIsProfileOpen(false)}
                       className="w-full rounded-md px-3 py-2 text-left text-sm text-gray-300 transition-colors hover:bg-zinc-800/50 hover:text-white"
@@ -455,7 +423,7 @@ function Layout({ children }: { children: ReactNode }) {
             </span>
             <span>End-to-end encrypted</span>
           </div>
-          <span>(c) 2024 THE ORCHESTRATOR AI</span>
+          <span>(c) 2026 TaskPilot</span>
         </footer>
         <MobileBottomNav />
       </div>

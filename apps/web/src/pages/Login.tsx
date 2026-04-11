@@ -27,14 +27,13 @@ export function Login() {
 
   return (
     <WavyBackground>
-      <div className="flex min-h-screen flex-col items-center justify-center bg-black px-4 py-10 sm:px-6">
+      <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12 sm:px-6 sm:py-20">
         <div className="mb-8 flex max-w-md flex-col items-center text-center slide-in">
-          <div className="mb-4 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-zinc-400">
-            AI Workflow Studio
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Task Runner</h1>
-          <p className="mt-3 text-sm leading-6 text-gray-500">
-            Smooth job orchestration on every screen, with a calmer mobile-first sign-in flow.
+          <img src="/logo.png" alt="TaskPilot Logo" className="mb-6 h-16 w-16 rounded-2xl object-contain shadow-2xl" />
+          
+          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">TaskPilot</h1>
+          <p className="mx-auto mt-3 max-w-[280px] text-sm leading-6 text-gray-500 sm:max-w-md">
+            From Request to Execution — Seamless Job Orchestration. Sign in now
           </p>
         </div>
 
@@ -61,11 +60,9 @@ export function Login() {
             </div>
 
             <div>
-              <div className="mb-1.5 flex items-center justify-between">
-                <label className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
-                  Password
-                </label>
-              </div>
+              <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-gray-500">
+                Password
+              </label>
               <div className="relative">
                 <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
