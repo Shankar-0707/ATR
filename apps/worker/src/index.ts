@@ -47,23 +47,37 @@ server.listen(env.PORT, "0.0.0.0", () => {
 
   // ── Self-ping keep-alive for Render Free Tier ──
   // Render spins down free web services after 15 min of inactivity.
-  // This pings our own /health endpoint every 13 minutes to stay alive.
+  // Pinging the PUBLIC URL counts as inbound traffic (localhost does NOT).
   if (env.NODE_ENV === "production") {
     const KEEP_ALIVE_INTERVAL_MS = 13 * 60 * 1000; // 13 minutes
+    const publicUrl = env.WORKER_PUBLIC_URL;
+
     setInterval(() => {
-      const req = http.request(
-        { hostname: "0.0.0.0", port: env.PORT, path: "/health", method: "GET" },
-        (res) => {
-          res.resume(); // drain response
-          logger.info("Keep-alive ping OK", { status: res.statusCode });
-        },
-      );
-      req.on("error", (err) => {
-        logger.warn("Keep-alive ping failed", { error: err.message });
-      });
-      req.end();
+      if (publicUrl) {
+        // Ping our own public URL — Render sees this as inbound traffic
+        fetch(`${publicUrl}/health`)
+          .then((res) => {
+            logger.info("Keep-alive ping OK (public)", { status: res.status, url: publicUrl });
+          })
+          .catch((err) => {
+            logger.warn("Keep-alive ping failed (public)", { error: String(err), url: publicUrl });
+          });
+      } else {
+        // Fallback: localhost ping (won't prevent Render spindown, but still validates health)
+        const req = http.request(
+          { hostname: "0.0.0.0", port: env.PORT, path: "/health", method: "GET" },
+          (res) => {
+            res.resume();
+            logger.info("Keep-alive ping OK (local)", { status: res.statusCode });
+          },
+        );
+        req.on("error", (err) => {
+          logger.warn("Keep-alive ping failed (local)", { error: err.message });
+        });
+        req.end();
+      }
     }, KEEP_ALIVE_INTERVAL_MS);
-    logger.info("Keep-alive self-ping enabled", { intervalMs: KEEP_ALIVE_INTERVAL_MS });
+    logger.info("Keep-alive self-ping enabled", { intervalMs: KEEP_ALIVE_INTERVAL_MS, publicUrl: publicUrl ?? "localhost" });
   }
 });
 

@@ -8,6 +8,7 @@ import {
 import { useJobsList } from "../hooks/useJobs.js";
 import { fetchUsage } from "../api/usage.api.js";
 import { useAuth } from "../hooks/useAuth.js";
+import { useWorkerWakeup } from "../hooks/useWorkerWakeup.js";
 import { type JobRow, retryJob, removeJob } from "../api/jobs.api.js";
 
 const JOB_ICONS: Record<string, React.ElementType> = {
@@ -163,10 +164,18 @@ export function Dashboard() {
   const q = useJobsList();
   const usage = useQuery({ queryKey: ["usage"], queryFn: fetchUsage, enabled: Boolean(user) });
 
+  // Pre-warm the worker so it's ready when the user creates a job
+  useWorkerWakeup();
+
   const items = q.data?.items ?? [];
   const total = q.data?.total ?? 0;
 
-
+  // Check if any job has been stuck in "pending" for more than 15 seconds
+  const hasStuckPending = items.some((j) => {
+    if (j.status !== "pending") return false;
+    const age = Date.now() - new Date(j.created_at).getTime();
+    return age > 15_000;
+  });
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -190,6 +199,17 @@ export function Dashboard() {
         <div className="mb-6 inline-flex max-w-full items-center gap-2 rounded-full border border-zinc-800 bg-[#000000] px-4 py-2 text-xs text-gray-400">
           <span className="w-2 h-2 rounded-md bg-emerald-500 pulse-dot" />
           Usage: {usage.data.jobsCreatedToday} / {usage.data.dailyJobLimit} jobs today
+        </div>
+      )}
+
+      {/* Warming up banner */}
+      {hasStuckPending && (
+        <div className="mb-6 flex items-center gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-400 slide-in">
+          <Loader2 size={16} className="animate-spin flex-shrink-0" />
+          <span>
+            AI services are warming up — your job will start processing shortly.
+            This may take up to a minute on the first request.
+          </span>
         </div>
       )}
 
