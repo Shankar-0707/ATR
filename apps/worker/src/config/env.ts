@@ -33,7 +33,7 @@ const imageSizeParsed = imageSizes.safeParse(imageSizeRaw);
 
 export const env = {
   ...parsed,
-  BULL_JOB_DELAY_MS: parsed.BULL_JOB_DELAY_MS ?? (parsed.NODE_ENV === "production" ? 0 : 2000),
+  BULL_JOB_DELAY_MS: parsed.BULL_JOB_DELAY_MS ?? (parsed.NODE_ENV === "production" ? 5000 : 2000),
   GEMINI_MODEL: defaultModel,
   GEMINI_TRANSLATION_MODEL:
     parsed.GEMINI_TRANSLATION_MODEL?.trim() || defaultModel,
