@@ -44,6 +44,27 @@ const server = http.createServer((req, res) => {
 
 server.listen(env.PORT, "0.0.0.0", () => {
   logger.info("Health check server active", { port: env.PORT });
+
+  // ── Self-ping keep-alive for Render Free Tier ──
+  // Render spins down free web services after 15 min of inactivity.
+  // This pings our own /health endpoint every 13 minutes to stay alive.
+  if (env.NODE_ENV === "production") {
+    const KEEP_ALIVE_INTERVAL_MS = 13 * 60 * 1000; // 13 minutes
+    setInterval(() => {
+      const req = http.request(
+        { hostname: "0.0.0.0", port: env.PORT, path: "/health", method: "GET" },
+        (res) => {
+          res.resume(); // drain response
+          logger.info("Keep-alive ping OK", { status: res.statusCode });
+        },
+      );
+      req.on("error", (err) => {
+        logger.warn("Keep-alive ping failed", { error: err.message });
+      });
+      req.end();
+    }, KEEP_ALIVE_INTERVAL_MS);
+    logger.info("Keep-alive self-ping enabled", { intervalMs: KEEP_ALIVE_INTERVAL_MS });
+  }
 });
 
 type AiTaskJobData = {
