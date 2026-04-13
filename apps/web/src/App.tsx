@@ -30,6 +30,7 @@ import { NewJob } from "./pages/NewJob.js";
 import { JobResult } from "./pages/JobResult.js";
 import { Admin } from "./pages/Admin.js";
 import { ToastContainer } from "./components/Toast.js";
+import { ChatWidget } from "./components/ChatWidget.js";
 
 function SocketBridge() {
   const { user } = useAuth();
@@ -426,6 +427,7 @@ function Layout({ children }: { children: ReactNode }) {
           <span>(c) 2026 TaskPilot</span>
         </footer>
         <MobileBottomNav />
+        <ChatWidget />
       </div>
     </div>
   );
