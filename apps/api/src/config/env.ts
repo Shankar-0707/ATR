@@ -18,6 +18,10 @@ const schema = z.object({
     z.boolean(),
   ).default(false),
   CORS_ORIGIN: z.string().optional(),
+  /** Gemini API key — used by the chat intent-parsing service. */
+  GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY is required"),
+  /** Which Gemini model to use for intent parsing. Defaults to gemini-2.5-flash. */
+  GEMINI_MODEL: z.string().optional(),
   /**
    * Milliseconds before BullMQ delivers the job to the worker (DB stays `pending` until then).
    * If unset: 2000ms when NODE_ENV is not `production`, else 0. Set to `0` in `.env` to disable.
@@ -82,6 +86,7 @@ export const env = {
   maxAttemptsAdmin: parsed.MAX_ATTEMPTS_ADMIN ?? 10,
   freePlanBlockGenerate: parsed.FREE_PLAN_BLOCK_GENERATE ?? false,
   dedupWindowSeconds: parsed.DEDUP_WINDOW_SECONDS ?? 120,
+  GEMINI_MODEL: parsed.GEMINI_MODEL?.trim() || "gemini-2.5-flash",
 };
 
 export type Env = typeof env;
